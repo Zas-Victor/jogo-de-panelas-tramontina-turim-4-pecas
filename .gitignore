@@ -20,3 +20,4 @@ secrets*.json
 .tmp/
 temp/
 .DS_Store
+.vercel
