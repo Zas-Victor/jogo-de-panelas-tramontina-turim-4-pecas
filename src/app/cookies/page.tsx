@@ -43,15 +43,6 @@ export default function CookiesPage() {
           bloqueia o conteúdo nem os links comerciais.
         </p>
 
-        {!privacyDisclosureReady ? (
-          <p className="privacy-update-note" role="status">
-            <strong>Documento preliminar:</strong> os detalhes de retenção,
-            identificadores efetivamente criados e transferências internacionais
-            ainda precisam ser confirmados. Os rastreadores opcionais ficam
-            desativados até a revisão dessas informações.
-          </p>
-        ) : null}
-
         <section aria-labelledby="cookies-essential">
           <h2 id="cookies-essential">1. Essenciais e preferência</h2>
           <p>
