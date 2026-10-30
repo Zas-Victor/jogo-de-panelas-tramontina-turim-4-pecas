@@ -27,22 +27,20 @@ const consentTestEnabled = Boolean(
 );
 
 async function rejectOptionalTracking(page: import('@playwright/test').Page) {
-  if (!consentTestEnabled) {
-    return;
-  }
-
-  const hasSavedChoice = await page.evaluate(() =>
-    localStorage.getItem('kynovra-privacy-consent-v2'),
-  );
-  if (hasSavedChoice) {
-    return;
-  }
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () => document.documentElement.dataset.cookieConsentSettingsReady,
+      ),
+    )
+    .toBe('true');
 
   const rejectButton = page.getByRole('button', {
     name: 'Rejeitar opcionais',
   });
-
-  await expect(rejectButton).toBeVisible();
+  if (!(await rejectButton.isVisible().catch(() => false))) {
+    return;
+  }
   await rejectButton.click();
 }
 
@@ -113,18 +111,13 @@ test('cookie preferences fit narrow screens and restore keyboard focus', async (
     await page.setViewportSize({ width, height: 812 });
     await page.goto('/');
 
-    const trigger = consentTestEnabled
-      ? page.getByRole('button', { name: 'Personalizar', exact: true })
-      : page.getByRole('button', { name: 'Preferências de cookies' }).last();
-    if (!consentTestEnabled) {
-      await expect
-        .poll(() =>
-          page.evaluate(
-            () => document.documentElement.dataset.cookieConsentSettingsReady,
-          ),
-        )
-        .toBe('true');
-    }
+    const trigger = page.getByRole('button', {
+      name: 'Personalizar',
+      exact: true,
+    });
+    await expect(
+      page.getByRole('button', { name: 'Aceitar opcionais' }),
+    ).toBeVisible();
     await expect(trigger).toBeVisible();
     await trigger.click();
     await expect(
@@ -341,7 +334,7 @@ test('privacy and cookies routes are reachable and the settings panel is keyboar
     page.getByRole('link', { name: 'Aviso de privacidade da Netlify' }),
   ).toBeVisible();
   await page
-    .getByRole('button', { name: 'Preferências de cookies' })
+    .getByRole('button', { name: 'Alterar consentimento' })
     .last()
     .click();
   await expect(
@@ -349,7 +342,7 @@ test('privacy and cookies routes are reachable and the settings panel is keyboar
   ).toBeFocused();
   await page.keyboard.press('Escape');
   await expect(
-    page.getByRole('button', { name: 'Preferências de cookies' }).last(),
+    page.getByRole('button', { name: 'Alterar consentimento' }).last(),
   ).toBeFocused();
 
   await page
@@ -362,16 +355,29 @@ test('privacy and cookies routes are reachable and the settings panel is keyboar
   await expect(page.getByText('kynovra-privacy-consent-v2')).toBeVisible();
 });
 
-test('cookie preferences remain available without tracker IDs and keep scripts unloaded', async ({
+test('consent prompt opens on entry, remembers the session choice, and shows it next session', async ({
   page,
 }) => {
   test.skip(analyticsTestEnabled || marketingTestEnabled);
   await page.goto('/');
 
-  await page.getByRole('button', { name: 'Preferências de cookies' }).click();
+  await expect(
+    page.getByRole('button', { name: 'Aceitar opcionais' }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: 'Rejeitar opcionais' }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: 'Personalizar' }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: 'Alterar consentimento' }),
+  ).toHaveCount(0);
+
+  await page.getByRole('button', { name: 'Personalizar' }).click();
   await expect(
     page.getByRole('heading', { name: 'Preferências de cookies' }),
-  ).toBeVisible();
+  ).toBeFocused();
   await expect(
     page.getByRole('checkbox', { name: /Analytics/ }),
   ).toBeDisabled();
@@ -382,11 +388,124 @@ test('cookie preferences remain available without tracker IDs and keep scripts u
   await expect(page.locator('#kynovra-meta-pixel-script')).toHaveCount(0);
 
   await page.getByRole('button', { name: 'Salvar preferências' }).click();
+  await expect(
+    page.getByRole('button', { name: 'Alterar consentimento' }),
+  ).toBeVisible();
   const storedChoice = await page.evaluate(() =>
     localStorage.getItem('kynovra-privacy-consent-v2'),
   );
   expect(storedChoice).toContain('"analytics":false');
   expect(storedChoice).toContain('"marketing":false');
+
+  await page
+    .locator('.footer-nav')
+    .getByRole('link', { name: 'Política de cookies' })
+    .click();
+  await expect(
+    page.getByRole('heading', { name: 'Política de Cookies' }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: 'Aceitar opcionais' }),
+  ).toHaveCount(0);
+  await page.goBack();
+  await expect(
+    page.getByRole('button', { name: 'Aceitar opcionais' }),
+  ).toHaveCount(0);
+
+  await page.evaluate(() =>
+    sessionStorage.removeItem('kynovra-cookie-session-choice-v1'),
+  );
+  await page.reload();
+  await expect(
+    page.getByRole('heading', { name: 'Revise suas preferências de cookies' }),
+  ).toBeVisible();
+  await expect(
+    page.getByText(/Analytics não autorizado; Marketing não autorizado/),
+  ).toBeVisible();
+});
+
+test('previous choices remain visible when tracking integrations are unavailable', async ({
+  page,
+}) => {
+  test.skip(analyticsTestEnabled || marketingTestEnabled);
+  await page.addInitScript(() => {
+    localStorage.setItem(
+      'kynovra-privacy-consent-v2',
+      JSON.stringify({ version: 2, analytics: true, marketing: true }),
+    );
+  });
+
+  await page.goto('/');
+  await expect(
+    page.getByText(/Analytics autorizado; Marketing autorizado/),
+  ).toBeVisible();
+  await expect(page.locator('#kynovra-ga4-script')).toHaveCount(0);
+  await expect(page.locator('#kynovra-meta-pixel-script')).toHaveCount(0);
+
+  await page.getByRole('button', { name: 'Rejeitar opcionais' }).click();
+  const savedChoice = await page.evaluate(() =>
+    localStorage.getItem('kynovra-privacy-consent-v2'),
+  );
+  expect(savedChoice).toContain('"analytics":false');
+  expect(savedChoice).toContain('"marketing":false');
+});
+
+test('return session restores independent consent choices for confirmation or change', async ({
+  page,
+}) => {
+  test.skip(!consentTestEnabled);
+  await page.route('https://www.googletagmanager.com/**', (route) =>
+    route.abort(),
+  );
+  await page.route('https://connect.facebook.net/**', (route) => route.abort());
+
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Personalizar' }).click();
+  if (analyticsTestEnabled) {
+    await page.getByRole('checkbox', { name: /Analytics/ }).check();
+  }
+  if (marketingTestEnabled) {
+    await page.getByRole('checkbox', { name: /Marketing/ }).uncheck();
+  }
+  await page.getByRole('button', { name: 'Salvar preferências' }).click();
+
+  const savedChoice = await page.evaluate(() =>
+    localStorage.getItem('kynovra-privacy-consent-v2'),
+  );
+  expect(savedChoice).toContain(
+    `"analytics":${analyticsTestEnabled ? 'true' : 'false'}`,
+  );
+  expect(savedChoice).toContain('"marketing":false');
+
+  await page.evaluate(() =>
+    sessionStorage.removeItem('kynovra-cookie-session-choice-v1'),
+  );
+  await page.reload();
+
+  await expect(
+    page.getByRole('heading', { name: 'Revise suas preferências de cookies' }),
+  ).toBeVisible();
+  await expect(
+    page.getByText(
+      new RegExp(
+        `Analytics ${analyticsTestEnabled ? 'autorizado' : 'não autorizado'}; Marketing não autorizado`,
+      ),
+    ),
+  ).toBeVisible();
+
+  await page.getByRole('button', { name: 'Personalizar' }).click();
+  if (analyticsTestEnabled) {
+    await expect(
+      page.getByRole('checkbox', { name: /Analytics/ }),
+    ).toBeChecked();
+  } else {
+    await expect(
+      page.getByRole('checkbox', { name: /Analytics/ }),
+    ).toBeDisabled();
+  }
+  await expect(
+    page.getByRole('checkbox', { name: /Marketing/ }),
+  ).not.toBeChecked();
 });
 
 test('consent falls back to session storage when localStorage is unavailable', async ({
@@ -420,6 +539,9 @@ test('consent falls back to session storage when localStorage is unavailable', a
   await expect(
     page.getByRole('button', { name: 'Rejeitar opcionais' }),
   ).toHaveCount(0);
+  await expect(
+    page.getByRole('button', { name: 'Alterar consentimento' }),
+  ).toBeVisible();
   await expect(page.locator('#kynovra-ga4-script')).toHaveCount(0);
   await expect(page.locator('#kynovra-meta-pixel-script')).toHaveCount(0);
 });
@@ -610,7 +732,7 @@ test('revoking categories blocks future tracking and clears known first-party id
     { name: '_ga', value: 'test', url: 'http://127.0.0.1:3000' },
     { name: '_fbp', value: 'test', url: 'http://127.0.0.1:3000' },
   ]);
-  await page.getByRole('button', { name: 'Preferências de cookies' }).click();
+  await page.getByRole('button', { name: 'Alterar consentimento' }).click();
   if (analyticsTestEnabled) {
     await page.getByRole('checkbox', { name: /Analytics/ }).uncheck();
   }

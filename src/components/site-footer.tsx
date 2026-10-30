@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { PrivacySettingsButton } from '@/components/analytics-consent';
+import { ConsentChangeButton } from '@/components/analytics-consent';
 import { brandLogo } from '@/lib/product-data';
 
 const footerLinks = [
@@ -53,7 +53,7 @@ export function SiteFooter() {
           anúncio de destino.
         </p>
 
-        <PrivacySettingsButton />
+        <ConsentChangeButton />
 
         <div className="footer-bottom">
           <span>© Kynovra Deals · Kynovra Solutions</span>

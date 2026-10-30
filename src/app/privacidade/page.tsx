@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { PrivacySettingsButton } from '@/components/analytics-consent';
 import { SiteFooter } from '@/components/site-footer';
 import {
   ga4MeasurementId,
@@ -176,8 +175,10 @@ export default function PrivacyPage() {
             nomes e prazos efetivos dependem das configurações dos serviços e
             ainda não foram verificados nesta instalação. Não declaramos
             períodos não confirmados. Consulte a{' '}
-            <Link href="/cookies">Política de Cookies</Link> e altere as
-            escolhas pelo link permanente no rodapé.
+            <Link href="/cookies">Política de Cookies</Link>. Depois da primeira
+            decisão, o botão “Alterar consentimento” no rodapé permite revisar
+            ou revogar as escolhas; a janela também reaparece em uma nova
+            sessão.
           </p>
         </section>
 
@@ -259,8 +260,8 @@ export default function PrivacyPage() {
             Mantemos dados pelo menor prazo necessário a cada finalidade, mas os
             períodos específicos ainda precisam ser verificados por tipo de dado
             e fornecedor. O registro da preferência no navegador não tem
-            expiração automática; você pode removê-lo ao revogar a escolha ou
-            limpar os dados do site no navegador.
+            expiração automática; ao alterar ou revogar a escolha, o registro é
+            atualizado. Você também pode apagar os dados do site no navegador.
           </p>
           {privacyRetentionSummary ? <p>{privacyRetentionSummary}</p> : null}
           {privacyTechnicalLogsSummary ? (
@@ -292,7 +293,6 @@ export default function PrivacyPage() {
               Orientação da ANPD sobre direitos dos titulares
             </ExternalLink>
           </p>
-          <PrivacySettingsButton />
         </section>
 
         <section aria-labelledby="privacy-security">

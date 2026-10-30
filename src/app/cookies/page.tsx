@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { PrivacySettingsButton } from '@/components/analytics-consent';
 import { SiteFooter } from '@/components/site-footer';
 import {
   ga4MeasurementId,
@@ -12,7 +11,7 @@ import { siteOrigin } from '@/lib/site-origin';
 export const metadata: Metadata = {
   title: 'Política de Cookies | Kynovra Deals',
   description:
-    'Veja como as preferências, o Google Analytics 4 e o Meta Pixel podem usar cookies ou identificadores na Kynovra Deals.',
+    'Entenda quando aparece a janela de consentimento e como as escolhas de cookies controlam Analytics e Marketing na Kynovra Deals.',
   alternates: siteOrigin
     ? { canonical: new URL('/cookies', siteOrigin) }
     : undefined,
@@ -56,9 +55,10 @@ export default function CookiesPage() {
             Esses mecanismos de armazenamento não são cookies. Não há, no código
             da landing page, outro cookie essencial identificado. A escolha
             salva no localStorage não expira automaticamente; a cópia em
-            sessionStorage vale durante a sessão daquela aba. É possível revogar
-            a escolha pelo link de preferências ou apagar os dados do site no
-            navegador.
+            sessionStorage vale durante a sessão daquela aba. Um marcador
+            separado em sessionStorage registra que você já decidiu durante a
+            sessão atual, para a janela não reaparecer em cada navegação
+            interna.
           </p>
           <p>
             Se o localStorage estiver indisponível, a página tenta manter a
@@ -66,6 +66,12 @@ export default function CookiesPage() {
             bloqueados, a preferência não poderá ser persistida e as integrações
             opcionais não serão carregadas; o acesso ao conteúdo e aos links
             comerciais continua disponível.
+          </p>
+          <p>
+            A janela aparece automaticamente no início de uma nova sessão. Se
+            houver uma escolha anterior salva, ela é apresentada novamente para
+            confirmação ou alteração. Na primeira visita, nenhuma categoria
+            opcional vem autorizada.
           </p>
         </section>
 
@@ -124,14 +130,15 @@ export default function CookiesPage() {
         <section aria-labelledby="cookies-manage">
           <h2 id="cookies-manage">5. Como alterar ou apagar preferências</h2>
           <p>
-            Use o botão abaixo ou o link permanente “Preferências de cookies” no
-            rodapé para aceitar, rejeitar ou escolher Analytics e Marketing
-            separadamente. A escolha pode ser alterada a qualquer momento. Você
-            também pode limpar os dados do site nas configurações do navegador;
-            nesse caso, a página perguntará novamente quando houver integrações
-            opcionais disponíveis.
+            Na janela inicial, escolha Aceitar opcionais, Rejeitar opcionais ou
+            Personalizar. Em Personalizar, Analytics e Marketing têm controles
+            independentes; sem consentimento anterior, ambos começam
+            desativados. Depois da primeira decisão, o botão discreto “Alterar
+            consentimento” aparece no rodapé e permite revogar ou modificar a
+            escolha a qualquer momento. Ao iniciar uma nova sessão, a janela
+            reaparece e mostra as opções salvas anteriormente. Você também pode
+            limpar os dados do site nas configurações do navegador.
           </p>
-          <PrivacySettingsButton />
         </section>
 
         <section aria-labelledby="cookies-updates">

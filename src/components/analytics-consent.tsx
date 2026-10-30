@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -10,11 +11,14 @@ import {
 } from '@/lib/site-config';
 
 const consentStorageKey = 'kynovra-privacy-consent-v2';
+const consentSessionChoiceKey = 'kynovra-cookie-session-choice-v1';
 const openConsentEvent = 'kynovra:open-consent-settings';
+const consentDecisionChangedEvent = 'kynovra:consent-decision-changed';
 const hasAnalytics = Boolean(ga4MeasurementId && privacyDisclosureReady);
 const hasMarketing = Boolean(metaPixelId && privacyDisclosureReady);
 const hasConfiguredTracker = Boolean(ga4MeasurementId || metaPixelId);
 const hasOptionalTrackers = hasAnalytics || hasMarketing;
+let consentDecisionExists = false;
 
 type ConsentChoice = {
   analytics: boolean;
@@ -26,6 +30,29 @@ type StoredConsent = ConsentChoice & {
 };
 
 type CampaignParameters = Record<string, string>;
+
+function publishConsentDecision(exists: boolean) {
+  consentDecisionExists = exists;
+  window.dispatchEvent(
+    new CustomEvent(consentDecisionChangedEvent, { detail: exists }),
+  );
+}
+
+function hasDecisionInCurrentSession(): boolean {
+  try {
+    return window.sessionStorage.getItem(consentSessionChoiceKey) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function markDecisionInCurrentSession() {
+  try {
+    window.sessionStorage.setItem(consentSessionChoiceKey, '1');
+  } catch {
+    // The visible component state still prevents a repeat until navigation reloads.
+  }
+}
 
 type MetaPixelFunction = ((...args: unknown[]) => void) & {
   callMethod?: (...args: unknown[]) => void;
@@ -227,8 +254,8 @@ function parseStoredConsent(value: string | null): ConsentChoice | null {
     }
 
     return {
-      analytics: parsed.analytics && hasAnalytics,
-      marketing: parsed.marketing && hasMarketing,
+      analytics: parsed.analytics,
+      marketing: parsed.marketing,
     };
   } catch {
     return null;
@@ -246,6 +273,7 @@ export function AnalyticsConsent() {
   const pathname = usePathname();
   const [consent, setConsent] = useState<ConsentChoice | null>(null);
   const [hydrated, setHydrated] = useState(false);
+  const [initialPromptOpen, setInitialPromptOpen] = useState(false);
   const [preferencesOpen, setPreferencesOpen] = useState(false);
   const [analyticsDraft, setAnalyticsDraft] = useState(false);
   const [marketingDraft, setMarketingDraft] = useState(false);
@@ -268,7 +296,10 @@ export function AnalyticsConsent() {
   );
 
   useEffect(() => {
-    setConsent(readStoredConsent());
+    const storedConsent = readStoredConsent();
+    setConsent(storedConsent);
+    publishConsentDecision(storedConsent !== null);
+    setInitialPromptOpen(!hasDecisionInCurrentSession());
     setHydrated(true);
   }, []);
 
@@ -479,6 +510,9 @@ export function AnalyticsConsent() {
     setConsent(
       persisted ? requestedChoice : { analytics: false, marketing: false },
     );
+    publishConsentDecision(true);
+    markDecisionInCurrentSession();
+    setInitialPromptOpen(false);
     setPreferencesOpen(false);
   }
 
@@ -492,9 +526,7 @@ export function AnalyticsConsent() {
     }
   }
 
-  const showInitialBanner = Boolean(
-    hydrated && !consent && hasOptionalTrackers,
-  );
+  const showInitialBanner = Boolean(hydrated && initialPromptOpen);
 
   if (!hydrated || (!showInitialBanner && !preferencesOpen)) {
     return null;
@@ -512,7 +544,9 @@ export function AnalyticsConsent() {
         <h2 id="consent-title" ref={panelTitleRef} tabIndex={-1}>
           {preferencesOpen
             ? 'Preferências de cookies'
-            : 'Escolha como medir esta visita'}
+            : consent
+              ? 'Revise suas preferências de cookies'
+              : 'Escolha suas preferências de cookies'}
         </h2>
         <p>
           {hasConfiguredTracker && !privacyDisclosureReady
@@ -521,6 +555,14 @@ export function AnalyticsConsent() {
               ? 'Analytics e marketing são opcionais. Você pode aceitar, rejeitar ou escolher cada categoria; a página e os links comerciais continuam disponíveis.'
               : 'Nenhum ID opcional está configurado neste ambiente. Nenhum script de analytics ou marketing será carregado.'}
         </p>
+        {!preferencesOpen && consent ? (
+          <p className="privacy-consent-previous-choice">
+            Sua escolha anterior: Analytics{' '}
+            {consent.analytics ? 'autorizado' : 'não autorizado'}; Marketing{' '}
+            {consent.marketing ? 'autorizado' : 'não autorizado'}. Em
+            Personalizar, você pode confirmar ou alterar essas opções.
+          </p>
+        ) : null}
         <p className="privacy-essential-note">
           Essenciais: a página guarda sua escolha no armazenamento do navegador,
           priorizando localStorage e usando sessionStorage se necessário. Isso
@@ -577,8 +619,8 @@ export function AnalyticsConsent() {
       ) : null}
 
       <div className="privacy-consent-actions">
-        <a href="/privacidade">Política de privacidade</a>
-        <a href="/cookies">Política de cookies</a>
+        <Link href="/privacidade">Política de privacidade</Link>
+        <Link href="/cookies">Política de cookies</Link>
         {preferencesOpen ? (
           <>
             <button
@@ -606,15 +648,6 @@ export function AnalyticsConsent() {
             <button
               className="consent-button"
               onClick={() =>
-                saveConsent({ analytics: false, marketing: false })
-              }
-              type="button"
-            >
-              Rejeitar opcionais
-            </button>
-            <button
-              className="consent-button"
-              onClick={() =>
                 saveConsent({
                   analytics: hasAnalytics,
                   marketing: hasMarketing,
@@ -623,6 +656,15 @@ export function AnalyticsConsent() {
               type="button"
             >
               Aceitar opcionais
+            </button>
+            <button
+              className="consent-button"
+              onClick={() =>
+                saveConsent({ analytics: false, marketing: false })
+              }
+              type="button"
+            >
+              Rejeitar opcionais
             </button>
             <button
               className="consent-button"
@@ -639,9 +681,37 @@ export function AnalyticsConsent() {
   );
 }
 
-export function PrivacySettingsButton() {
+export function ConsentChangeButton() {
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const handleConsentDecisionChange = (event?: Event) => {
+      if (event instanceof CustomEvent && typeof event.detail === 'boolean') {
+        setVisible(event.detail);
+      } else {
+        setVisible(consentDecisionExists);
+      }
+    };
+
+    handleConsentDecisionChange();
+    window.addEventListener(
+      consentDecisionChangedEvent,
+      handleConsentDecisionChange,
+    );
+    return () =>
+      window.removeEventListener(
+        consentDecisionChangedEvent,
+        handleConsentDecisionChange,
+      );
+  }, []);
+
+  if (!visible) {
+    return null;
+  }
+
   return (
     <button
+      data-consent-settings-trigger
       className="privacy-settings-button"
       onClick={(event) =>
         window.dispatchEvent(
@@ -650,7 +720,7 @@ export function PrivacySettingsButton() {
       }
       type="button"
     >
-      Preferências de cookies
+      Alterar consentimento
     </button>
   );
 }
