@@ -8,6 +8,12 @@ const privacyControllerCandidate =
   process.env.NEXT_PUBLIC_PRIVACY_CONTROLLER_NAME?.trim();
 const privacyRetentionCandidate =
   process.env.NEXT_PUBLIC_PRIVACY_RETENTION_SUMMARY?.trim();
+const privacyTransferCandidate =
+  process.env.NEXT_PUBLIC_PRIVACY_TRANSFER_SUMMARY?.trim();
+const privacyTechnicalLogsCandidate =
+  process.env.NEXT_PUBLIC_PRIVACY_TECHNICAL_LOGS_SUMMARY?.trim();
+const privacyNoticeApproved =
+  process.env.NEXT_PUBLIC_PRIVACY_NOTICE_APPROVED === 'true';
 
 export const ga4MeasurementId = ga4Candidate?.match(/^G-[A-Z0-9]+$/i)
   ? ga4Candidate
@@ -33,9 +39,21 @@ function getPrivacyContactUrl(value: string | undefined): string | null {
   }
 }
 
-export const privacyContactUrl = getPrivacyContactUrl(privacyContactCandidate);
+export const privacyContactUrl =
+  getPrivacyContactUrl(privacyContactCandidate) ??
+  'mailto:contato@kynovra.digital';
+export const privacyContactLabel = privacyContactUrl.startsWith('mailto:')
+  ? privacyContactUrl.slice('mailto:'.length)
+  : 'canal oficial de privacidade';
 export const privacyControllerName = privacyControllerCandidate || null;
 export const privacyRetentionSummary = privacyRetentionCandidate || null;
+export const privacyTransferSummary = privacyTransferCandidate || null;
+export const privacyTechnicalLogsSummary =
+  privacyTechnicalLogsCandidate || null;
 export const privacyDisclosureReady = Boolean(
-  privacyContactUrl && privacyControllerName && privacyRetentionSummary,
+  privacyControllerName &&
+    privacyRetentionSummary &&
+    privacyTransferSummary &&
+    privacyTechnicalLogsSummary &&
+    privacyNoticeApproved,
 );

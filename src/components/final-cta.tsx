@@ -26,7 +26,7 @@ export function FinalCta() {
             informações em mãos.
           </p>
           <AffiliateCta className="button-primary final-cta-button">
-            Conferir preço
+            Conferir preço no Mercado Livre
           </AffiliateCta>
           <p className="final-cta-disclosure">
             A Kynovra Deals é afiliada, não vende nem fabrica o produto, e pode

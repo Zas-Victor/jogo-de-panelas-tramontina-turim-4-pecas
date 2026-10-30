@@ -1,7 +1,7 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   ga4MeasurementId,
   mercadolivreAffiliateUrl,
@@ -9,17 +9,12 @@ import {
   privacyDisclosureReady,
 } from '@/lib/site-config';
 
-const consentStorageKey = 'kynovra-privacy-consent-v1';
+const consentStorageKey = 'kynovra-privacy-consent-v2';
 const openConsentEvent = 'kynovra:open-consent-settings';
 const hasAnalytics = Boolean(ga4MeasurementId && privacyDisclosureReady);
 const hasMarketing = Boolean(metaPixelId && privacyDisclosureReady);
+const hasConfiguredTracker = Boolean(ga4MeasurementId || metaPixelId);
 const hasOptionalTrackers = hasAnalytics || hasMarketing;
-const configuredServices = [
-  hasAnalytics ? 'Google Analytics 4' : null,
-  hasMarketing ? 'Meta Pixel' : null,
-]
-  .filter(Boolean)
-  .join(' e ');
 
 type ConsentChoice = {
   analytics: boolean;
@@ -27,7 +22,7 @@ type ConsentChoice = {
 };
 
 type StoredConsent = ConsentChoice & {
-  version: 1;
+  version: 2;
 };
 
 type CampaignParameters = Record<string, string>;
@@ -118,18 +113,19 @@ function getGoogleAnalytics(measurementId: string) {
       window.dataLayer?.push(args);
     };
 
+    window.gtag('consent', 'default', {
+      analytics_storage: 'denied',
+      ad_storage: 'denied',
+      ad_user_data: 'denied',
+      ad_personalization: 'denied',
+    });
+
     const script = document.createElement('script');
     script.async = true;
     script.id = 'kynovra-ga4-script';
     script.src = `https://www.googletagmanager.com/gtag/js?id=${measurementId}`;
     document.head.append(script);
 
-    window.gtag('consent', 'default', {
-      analytics_storage: 'granted',
-      ad_storage: 'denied',
-      ad_user_data: 'denied',
-      ad_personalization: 'denied',
-    });
     window.gtag('js', new Date());
     window.gtag('config', measurementId, {
       send_page_view: false,
@@ -170,6 +166,40 @@ function getMetaPixel(): MetaPixelFunction {
   return pixel;
 }
 
+function removeFirstPartyCookies(pattern: RegExp) {
+  const host = window.location.hostname;
+  const domains = [host];
+
+  if (host.endsWith('.kynovra.digital')) {
+    domains.push('.kynovra.digital', 'kynovra.digital');
+  }
+
+  const names = document.cookie
+    .split(';')
+    .map((cookie) => cookie.trim().split('=')[0])
+    .filter((name) => pattern.test(name));
+
+  for (const name of names) {
+    const secureAttribute =
+      window.location.protocol === 'https:' ? '; Secure' : '';
+    for (const domain of domains) {
+      // biome-ignore lint/suspicious/noDocumentCookie: Clear known first-party identifiers in browsers without Cookie Store API support.
+      document.cookie = `${name}=; Max-Age=0; path=/; domain=${domain}; SameSite=Lax${secureAttribute}`;
+    }
+
+    // biome-ignore lint/suspicious/noDocumentCookie: Clear known first-party identifiers in browsers without Cookie Store API support.
+    document.cookie = `${name}=; Max-Age=0; path=/; SameSite=Lax${secureAttribute}`;
+  }
+}
+
+function clearAnalyticsIdentifiers() {
+  removeFirstPartyCookies(/^_(?:ga(?:_|$)|gid$|gat(?:_|$))/);
+}
+
+function clearMarketingIdentifiers() {
+  removeFirstPartyCookies(/^_(?:fbp|fbc)$/);
+}
+
 function readStoredConsent(): ConsentChoice | null {
   try {
     const storedValue = localStorage.getItem(consentStorageKey);
@@ -181,7 +211,7 @@ function readStoredConsent(): ConsentChoice | null {
     const parsed = JSON.parse(storedValue) as Partial<StoredConsent>;
 
     if (
-      parsed.version !== 1 ||
+      parsed.version !== 2 ||
       typeof parsed.analytics !== 'boolean' ||
       typeof parsed.marketing !== 'boolean'
     ) {
@@ -204,17 +234,22 @@ export function AnalyticsConsent() {
   const [preferencesOpen, setPreferencesOpen] = useState(false);
   const [analyticsDraft, setAnalyticsDraft] = useState(false);
   const [marketingDraft, setMarketingDraft] = useState(false);
+  const panelTitleRef = useRef<HTMLHeadingElement>(null);
+  const wasPreferencesOpen = useRef(false);
+  const lastPreferencesTrigger = useRef<HTMLElement | null>(null);
+  const lastAnalyticsView = useRef('');
+  const lastMarketingView = useRef('');
 
   useEffect(() => {
-    if (hasOptionalTrackers) {
-      setConsent(readStoredConsent());
-    }
-
+    setConsent(readStoredConsent());
     setHydrated(true);
   }, []);
 
   useEffect(() => {
-    const openPreferences = () => {
+    const openPreferences = (event: Event) => {
+      if (event instanceof CustomEvent && event.detail instanceof HTMLElement) {
+        lastPreferencesTrigger.current = event.detail;
+      }
       setAnalyticsDraft(consent?.analytics ?? false);
       setMarketingDraft(consent?.marketing ?? false);
       setPreferencesOpen(true);
@@ -225,19 +260,31 @@ export function AnalyticsConsent() {
   }, [consent]);
 
   useEffect(() => {
-    if (!consent) {
-      return;
+    if (preferencesOpen) {
+      panelTitleRef.current?.focus();
+      wasPreferencesOpen.current = true;
+    } else if (wasPreferencesOpen.current) {
+      lastPreferencesTrigger.current?.focus();
+      wasPreferencesOpen.current = false;
+    }
+  }, [preferencesOpen]);
+
+  useEffect(() => {
+    if (!consent?.analytics) {
+      lastAnalyticsView.current = '';
+      window.gtag?.('consent', 'update', {
+        analytics_storage: 'denied',
+        ad_storage: 'denied',
+        ad_user_data: 'denied',
+        ad_personalization: 'denied',
+      });
+      clearAnalyticsIdentifiers();
     }
 
-    window.gtag?.('consent', 'update', {
-      analytics_storage: consent.analytics ? 'granted' : 'denied',
-      ad_storage: 'denied',
-      ad_user_data: 'denied',
-      ad_personalization: 'denied',
-    });
-
-    if (window.fbq && !consent.marketing) {
-      window.fbq('consent', 'revoke');
+    if (!consent?.marketing) {
+      lastMarketingView.current = '';
+      window.fbq?.('consent', 'revoke');
+      clearMarketingIdentifiers();
     }
   }, [consent]);
 
@@ -245,6 +292,12 @@ export function AnalyticsConsent() {
     if (!consent?.analytics || !hasAnalytics || !ga4MeasurementId) {
       return;
     }
+
+    const viewKey = `${pathname}|${consent.analytics}`;
+    if (lastAnalyticsView.current === viewKey) {
+      return;
+    }
+    lastAnalyticsView.current = viewKey;
 
     const gtag = getGoogleAnalytics(ga4MeasurementId);
     const campaign = getCampaignParameters();
@@ -282,6 +335,12 @@ export function AnalyticsConsent() {
       return;
     }
 
+    const viewKey = `${pathname}|${consent.marketing}`;
+    if (lastMarketingView.current === viewKey) {
+      return;
+    }
+    lastMarketingView.current = viewKey;
+
     const pixel = getMetaPixel();
     pixel('consent', 'grant');
     if (window.kynovraMetaPixelId !== metaPixelId) {
@@ -310,7 +369,7 @@ export function AnalyticsConsent() {
     }
 
     const trackAffiliateClick = (event: MouseEvent) => {
-      if (!(event.target instanceof Element)) {
+      if (!event.isTrusted || !(event.target instanceof Element)) {
         return;
       }
 
@@ -356,7 +415,7 @@ export function AnalyticsConsent() {
     try {
       localStorage.setItem(
         consentStorageKey,
-        JSON.stringify({ version: 1, ...nextChoice } satisfies StoredConsent),
+        JSON.stringify({ version: 2, ...nextChoice } satisfies StoredConsent),
       );
     } catch {
       // Keep the current page usable if browser storage is unavailable.
@@ -366,11 +425,21 @@ export function AnalyticsConsent() {
     setPreferencesOpen(false);
   }
 
-  if (!hydrated || !hasOptionalTrackers) {
-    return null;
+  function closePreferences() {
+    setPreferencesOpen(false);
   }
 
-  if (consent && !preferencesOpen) {
+  function handlePanelKeyDown(event: React.KeyboardEvent<HTMLElement>) {
+    if (event.key === 'Escape' && preferencesOpen) {
+      closePreferences();
+    }
+  }
+
+  const showInitialBanner = Boolean(
+    hydrated && !consent && hasOptionalTrackers,
+  );
+
+  if (!hydrated || (!showInitialBanner && !preferencesOpen)) {
     return null;
   }
 
@@ -379,64 +448,85 @@ export function AnalyticsConsent() {
       aria-labelledby="consent-title"
       className="privacy-consent"
       id="preferencias-de-privacidade"
+      onKeyDown={handlePanelKeyDown}
     >
       <div className="privacy-consent-copy">
         <p className="eyebrow">SUA PRIVACIDADE</p>
-        <h2 id="consent-title">
+        <h2 id="consent-title" ref={panelTitleRef} tabIndex={-1}>
           {preferencesOpen
-            ? 'Escolha suas preferências'
-            : 'Cookies e mensuração'}
+            ? 'Preferências de cookies'
+            : 'Escolha como medir esta visita'}
         </h2>
         <p>
-          {preferencesOpen
-            ? 'Você pode alterar ou retirar estas escolhas quando quiser na página de privacidade.'
-            : `O uso de ${configuredServices} é opcional. Escolha se autoriza o rastreamento; os links de compra funcionam mesmo se você recusar.`}
+          {hasConfiguredTracker && !privacyDisclosureReady
+            ? 'As integrações opcionais estão desativadas enquanto as informações de privacidade, retenção e transferências internacionais são revisadas. Nenhum rastreador será carregado.'
+            : hasOptionalTrackers
+              ? 'Analytics e marketing são opcionais. Você pode aceitar, rejeitar ou escolher cada categoria; a página e os links comerciais continuam disponíveis.'
+              : 'Nenhum ID opcional está configurado neste ambiente. Nenhum script de analytics ou marketing será carregado.'}
+        </p>
+        <p className="privacy-essential-note">
+          Essenciais: esta página guarda sua escolha no armazenamento local do
+          navegador para respeitar sua preferência. Isso não é um cookie e não
+          contém um identificador de visita.
         </p>
       </div>
 
       {preferencesOpen ? (
         <fieldset className="privacy-options">
           <legend>Escolha as categorias opcionais:</legend>
-          {hasAnalytics ? (
-            <label>
-              <input
-                checked={analyticsDraft}
-                onChange={(event) =>
-                  setAnalyticsDraft(event.currentTarget.checked)
-                }
-                type="checkbox"
-              />
-              <span>
-                <strong>Estatísticas</strong>
-                <small>Google Analytics 4 para medir visitas e cliques.</small>
-              </span>
-            </label>
-          ) : null}
-          {hasMarketing ? (
-            <label>
-              <input
-                checked={marketingDraft}
-                onChange={(event) =>
-                  setMarketingDraft(event.currentTarget.checked)
-                }
-                type="checkbox"
-              />
-              <span>
-                <strong>Marketing</strong>
-                <small>Meta Pixel para mensurar campanhas e anúncios.</small>
-              </span>
-            </label>
-          ) : null}
+          <label>
+            <input
+              checked={analyticsDraft}
+              disabled={!hasAnalytics}
+              onChange={(event) =>
+                setAnalyticsDraft(event.currentTarget.checked)
+              }
+              type="checkbox"
+            />
+            <span>
+              <strong>Analytics</strong>
+              <small>
+                Google Analytics 4 para visualizar visitas e cliques de saída.
+                {!ga4MeasurementId
+                  ? ' Indisponível: nenhum ID está configurado.'
+                  : !privacyDisclosureReady
+                    ? ' Indisponível enquanto os detalhes legais não forem confirmados.'
+                    : ''}
+              </small>
+            </span>
+          </label>
+          <label>
+            <input
+              checked={marketingDraft}
+              disabled={!hasMarketing}
+              onChange={(event) =>
+                setMarketingDraft(event.currentTarget.checked)
+              }
+              type="checkbox"
+            />
+            <span>
+              <strong>Marketing</strong>
+              <small>
+                Meta Pixel para mensuração de campanhas e anúncios.
+                {!metaPixelId
+                  ? ' Indisponível: nenhum ID está configurado.'
+                  : !privacyDisclosureReady
+                    ? ' Indisponível enquanto os detalhes legais não forem confirmados.'
+                    : ''}
+              </small>
+            </span>
+          </label>
         </fieldset>
       ) : null}
 
       <div className="privacy-consent-actions">
         <a href="/privacidade">Política de privacidade</a>
+        <a href="/cookies">Política de cookies</a>
         {preferencesOpen ? (
           <>
             <button
               className="consent-button"
-              onClick={() => setPreferencesOpen(false)}
+              onClick={closePreferences}
               type="button"
             >
               Voltar
@@ -451,7 +541,7 @@ export function AnalyticsConsent() {
               }
               type="button"
             >
-              Salvar escolhas
+              Salvar preferências
             </button>
           </>
         ) : (
@@ -467,10 +557,15 @@ export function AnalyticsConsent() {
             </button>
             <button
               className="consent-button"
-              onClick={() => saveConsent({ analytics: true, marketing: true })}
+              onClick={() =>
+                saveConsent({
+                  analytics: hasAnalytics,
+                  marketing: hasMarketing,
+                })
+              }
               type="button"
             >
-              Aceitar todos
+              Aceitar opcionais
             </button>
             <button
               className="consent-button"
@@ -490,10 +585,14 @@ export function PrivacySettingsButton() {
   return (
     <button
       className="privacy-settings-button"
-      onClick={() => window.dispatchEvent(new Event(openConsentEvent))}
+      onClick={(event) =>
+        window.dispatchEvent(
+          new CustomEvent(openConsentEvent, { detail: event.currentTarget }),
+        )
+      }
       type="button"
     >
-      Gerenciar consentimento de cookies
+      Preferências de cookies
     </button>
   );
 }

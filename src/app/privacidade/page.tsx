@@ -1,29 +1,47 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { PrivacySettingsButton } from '@/components/analytics-consent';
+import { SiteFooter } from '@/components/site-footer';
 import {
   ga4MeasurementId,
   metaPixelId,
+  privacyContactLabel,
   privacyContactUrl,
   privacyControllerName,
   privacyDisclosureReady,
   privacyRetentionSummary,
+  privacyTechnicalLogsSummary,
+  privacyTransferSummary,
 } from '@/lib/site-config';
 import { siteOrigin } from '@/lib/site-origin';
 
 export const metadata: Metadata = {
-  title: 'Privacidade e cookies | Kynovra Deals',
+  title: 'Aviso de Privacidade | Kynovra Deals',
   description:
-    'Saiba como as preferências de cookies, as UTMs de campanha e os eventos opcionais são tratados na Kynovra Deals.',
+    'Entenda quais dados a landing page Kynovra Deals trata, para quais finalidades e como exercer seus direitos de privacidade.',
   alternates: siteOrigin
     ? { canonical: new URL('/privacidade', siteOrigin) }
     : undefined,
+  robots: { index: privacyDisclosureReady, follow: true },
 };
 
-const hasConfiguredTracker = Boolean(ga4MeasurementId || metaPixelId);
-const trackingEnabled = Boolean(hasConfiguredTracker && privacyDisclosureReady);
+function ExternalLink({
+  children,
+  href,
+}: {
+  children: React.ReactNode;
+  href: string;
+}) {
+  return (
+    <a href={href} rel="noopener noreferrer" target="_blank">
+      {children}
+    </a>
+  );
+}
 
 export default function PrivacyPage() {
+  const hasConfiguredTracker = Boolean(ga4MeasurementId || metaPixelId);
+
   return (
     <>
       <a className="skip-link" href="#privacy-content">
@@ -38,157 +56,304 @@ export default function PrivacyPage() {
           Voltar à Kynovra Deals
         </Link>
         <p className="eyebrow">TRANSPARÊNCIA E CONTROLE</p>
-        <h1 className="section-title">Privacidade e cookies</h1>
+        <h1 className="section-title">Aviso de Privacidade</h1>
         <p className="privacy-intro">
-          Este aviso explica como a landing page Kynovra Deals trata dados
-          usados para mensuração de campanhas e como você pode controlar esse
-          uso.
+          Este aviso descreve o tratamento de dados na landing page Kynovra
+          Deals, uma página de divulgação e afiliação. A compra e o pagamento
+          são feitos no Mercado Livre; esta página não recebe dados de pedido ou
+          pagamento.
         </p>
 
-        <section aria-labelledby="privacy-operator">
-          <h2 id="privacy-operator">Quem opera este site</h2>
-          <p>
-            Kynovra Deals é uma marca da Kynovra Solutions. A identificação
-            legal do controlador precisa ser confirmada pela empresa antes de
-            ativar rastreadores opcionais.
+        {!privacyDisclosureReady ? (
+          <p className="privacy-update-note" role="status">
+            <strong>Documento preliminar:</strong> a identificação civil do
+            controlador, os detalhes de retenção, os registros técnicos e os
+            mecanismos das transferências internacionais ainda precisam ser
+            confirmados. A versão definitiva depende dessa revisão. Analytics e
+            Meta Pixel permanecem desativados enquanto a revisão não for
+            concluída.
           </p>
-          {privacyControllerName ? (
-            <p>
-              <strong>Controlador informado:</strong> {privacyControllerName}
-            </p>
-          ) : (
-            <p className="privacy-pending">
-              Nome legal do controlador: pendente de confirmação pela Kynovra
-              Solutions.
-            </p>
-          )}
-          {privacyContactUrl ? (
-            <p>
-              <strong>Canal de privacidade:</strong>{' '}
-              <a href={privacyContactUrl} rel="noreferrer">
-                {privacyContactUrl.startsWith('mailto:')
-                  ? privacyContactUrl.slice('mailto:'.length)
-                  : 'Acessar canal oficial'}
-              </a>
-            </p>
-          ) : (
-            <p className="privacy-pending">
-              Canal oficial para solicitações de privacidade: pendente de
-              informação pela Kynovra Solutions.
-            </p>
-          )}
+        ) : null}
+
+        <section aria-labelledby="privacy-controller">
+          <h2 id="privacy-controller">1. Quem é responsável</h2>
+          <p>
+            Kynovra Deals é uma marca da Kynovra Solutions, operação de pessoa
+            física sem CNPJ. A localidade informada para a operação é Natal, Rio
+            Grande do Norte, Brasil.
+          </p>
+          <p>
+            <strong>Controlador:</strong>{' '}
+            {privacyControllerName ??
+              'pessoa física responsável pela operação; nome civil pendente de confirmação.'}
+          </p>
+          <p>
+            <strong>Canal para privacidade:</strong>{' '}
+            <a href={privacyContactUrl}>{privacyContactLabel}</a>. As
+            solicitações são recebidas por e-mail e tratadas manualmente pelo
+            responsável.
+          </p>
         </section>
 
         <section aria-labelledby="privacy-data">
-          <h2 id="privacy-data">O que é tratado e para quê</h2>
+          <h2 id="privacy-data">
+            2. Dados tratados, finalidades e bases legais
+          </h2>
+          <ul>
+            <li>
+              <strong>Preferência de cookies:</strong> a escolha entre Analytics
+              e Marketing fica no armazenamento local do navegador, sem
+              identificador de visita. Serve para guardar e respeitar a escolha.
+              A definição da base legal específica para este registro mínimo
+              está pendente de revisão.
+            </li>
+            <li>
+              <strong>Dados técnicos de acesso:</strong> a hospedagem pode
+              processar dados da requisição para entregar e proteger o site. A
+              lista exata de campos, os prazos e a base legal aplicável precisam
+              ser confirmados com a configuração da Vercel. A finalidade
+              prevista é operação e segurança, com análise de legítimo interesse
+              pendente.
+            </li>
+            <li>
+              <strong>Parâmetros de campanha (UTMs):</strong> quando presentes
+              no endereço, podem ser enviados junto a eventos de analytics ou
+              marketing somente se a categoria correspondente estiver
+              configurada, liberada e autorizada. A base legal é o consentimento
+              para a categoria escolhida.
+            </li>
+            <li>
+              <strong>Eventos opcionais:</strong> com consentimento, o Google
+              Analytics 4 pode receber visualizações de página e do produto e
+              cliques de saída; o Meta Pixel pode receber visualizações e
+              cliques de saída. A base legal é o consentimento, que pode ser
+              revogado. Nenhum evento de compra é enviado.
+            </li>
+            <li>
+              <strong>Navegação para o Mercado Livre:</strong> ao ativar um link
+              comercial, o navegador abre o endereço de afiliado solicitado e
+              envia dados técnicos ao destino. Sem consentimento para
+              mensuração, a landing page não registra esse clique em analytics
+              ou marketing.
+            </li>
+            <li>
+              <strong>Pedidos de privacidade:</strong> se você enviar um e-mail,
+              o endereço e o conteúdo da mensagem serão usados para responder e
+              tratar a solicitação. O canal e o atendimento são manuais; a base
+              legal específica e a retenção dessas mensagens ainda precisam ser
+              documentadas.
+            </li>
+          </ul>
           <p>
-            Se configurados e autorizados por você, Google Analytics 4 pode
-            receber eventos de visualização da página, visualização do produto e
-            clique de saída para o Mercado Livre. Meta Pixel pode receber
-            eventos de visualização da página, visualização do produto e clique
-            de saída. Nenhum evento de compra é enviado por esta landing page.
-          </p>
-          <p>
-            Parâmetros de campanha presentes no endereço (como origem, campanha
-            e criativo) acompanham esses eventos somente após o consentimento
-            correspondente. Eles não são gravados separadamente pelo site.
-          </p>
-          <p>
-            A escolha de consentimento fica salva no armazenamento local do
-            navegador para respeitar sua preferência. Sem IDs configurados, sem
-            os dados legais necessários ou sem consentimento, os rastreadores
-            não são carregados. Os links para o Mercado Livre continuam
-            disponíveis.
-          </p>
-          <p>
-            <strong>Retenção:</strong>{' '}
-            {privacyRetentionSummary ??
-              'prazo pendente de confirmação pela Kynovra Solutions antes de ativar os rastreadores.'}
+            A página não possui formulário, não recebe pagamentos e não coleta
+            dados de compra. O Mercado Livre informa as próprias condições de
+            compra, pagamento e entrega no anúncio de destino.
           </p>
         </section>
 
-        <section aria-labelledby="privacy-third-parties">
-          <h2 id="privacy-third-parties">Serviços de terceiros</h2>
+        <section aria-labelledby="privacy-logs">
+          <h2 id="privacy-logs">3. Logs técnicos e ferramentas de análise</h2>
           <p>
-            Quando autorizados, os eventos são enviados diretamente ao Google
-            e/ou à Meta, que tratam dados conforme suas próprias políticas e
-            configurações. Esta página não recebe informações de pagamento,
-            pedidos ou confirmação de compra.
+            A infraestrutura que entrega a página pode gerar registros técnicos
+            de requisições. Os campos exatos, o acesso a esses registros, sua
+            finalidade operacional e os períodos de retenção ainda estão em
+            verificação. Não atribuímos a esses logs um prazo que não foi
+            confirmado.
+          </p>
+          <p>
+            {hasConfiguredTracker
+              ? 'Há um ou mais IDs de integração configurados neste ambiente. Os scripts continuam bloqueados até que as informações legais e técnicas sejam confirmadas e você autorize a categoria correspondente.'
+              : 'Nenhum ID de Google Analytics 4 ou Meta Pixel está configurado neste ambiente; por isso, esses scripts não são carregados.'}{' '}
+            Quando habilitados após revisão, Analytics e Marketing são
+            independentes e opcionais. Consulte a{' '}
+            <Link href="/cookies">Política de Cookies</Link>.
+          </p>
+        </section>
+
+        <section aria-labelledby="privacy-cookies">
+          <h2 id="privacy-cookies">4. Cookies e armazenamento local</h2>
+          <p>
+            O código da landing page não grava cookies próprios para lembrar a
+            preferência: registra apenas duas escolhas no armazenamento local do
+            navegador. Esse registro fica até ser apagado no navegador ou
+            substituído por uma nova versão da preferência; não há expiração
+            automática configurada.
+          </p>
+          <p>
+            Google Analytics 4 e Meta Pixel podem usar cookies ou
+            identificadores de navegador quando configurados e autorizados. Os
+            nomes e prazos efetivos dependem das configurações dos serviços e
+            ainda não foram verificados nesta instalação. Não declaramos
+            períodos não confirmados. Consulte a{' '}
+            <Link href="/cookies">Política de Cookies</Link> e altere as
+            escolhas pelo link permanente no rodapé.
+          </p>
+        </section>
+
+        <section aria-labelledby="privacy-sharing">
+          <h2 id="privacy-sharing">5. Compartilhamento com fornecedores</h2>
+          <ul>
+            <li>
+              <strong>Vercel:</strong> hospedagem e entrega da landing page;
+              registros técnicos dependem da configuração da plataforma.
+            </li>
+            <li>
+              <strong>Mercado Livre:</strong> recebe a requisição quando você
+              segue o link de afiliado; compra e pagamento acontecem fora desta
+              página.
+            </li>
+            <li>
+              <strong>Google:</strong> recebe eventos de analytics apenas com
+              integração configurada, revisão concluída e consentimento de
+              Analytics.
+            </li>
+            <li>
+              <strong>Meta:</strong> recebe eventos de marketing apenas com
+              integração configurada, revisão concluída e consentimento de
+              Marketing.
+            </li>
+          </ul>
+          <p>
+            Cada fornecedor aplica seus próprios termos e avisos de privacidade.
+            Não adicionamos outros destinatários além dos serviços informados
+            para esta operação.
           </p>
           <ul>
-            {ga4MeasurementId ? (
-              <li>
-                Google Analytics 4:{' '}
-                <a href="https://policies.google.com/privacy" rel="noreferrer">
-                  Política de privacidade do Google
-                </a>
-                {trackingEnabled
-                  ? null
-                  : ' (rastreamento desativado nesta configuração)'}
-              </li>
-            ) : null}
-            {metaPixelId ? (
-              <li>
-                Meta Pixel:{' '}
-                <a
-                  href="https://www.facebook.com/privacy/policy/"
-                  rel="noreferrer"
-                >
-                  Política de privacidade da Meta
-                </a>
-                {trackingEnabled
-                  ? null
-                  : ' (rastreamento desativado nesta configuração)'}
-              </li>
-            ) : null}
-            {!hasConfiguredTracker ? (
-              <li>
-                Nenhum ID de rastreamento está configurado neste ambiente.
-              </li>
-            ) : null}
+            <li>
+              <ExternalLink href="https://vercel.com/legal/privacy-policy">
+                Aviso de privacidade da Vercel
+              </ExternalLink>
+            </li>
+            <li>
+              <ExternalLink href="https://www.mercadolivre.com.br/privacidade">
+                Aviso de privacidade do Mercado Livre
+              </ExternalLink>
+            </li>
+            <li>
+              <ExternalLink href="https://policies.google.com/privacy">
+                Política de privacidade do Google
+              </ExternalLink>
+            </li>
+            <li>
+              <ExternalLink href="https://www.facebook.com/privacy/policy/">
+                Política de privacidade da Meta
+              </ExternalLink>
+            </li>
           </ul>
         </section>
 
-        <section aria-labelledby="privacy-control">
-          <h2 id="privacy-control">Como alterar ou retirar sua escolha</h2>
+        <section aria-labelledby="privacy-transfers">
+          <h2 id="privacy-transfers">6. Transferências internacionais</h2>
           <p>
-            Você pode rejeitar os rastreadores opcionais, escolher cada
-            categoria separadamente ou retirar o consentimento a qualquer
-            momento por meio das preferências abaixo. Também é possível apagar
-            os dados locais do navegador.
+            A operação pode envolver transferências internacionais de dados por
+            meio dos serviços acima. Países de destino, dados envolvidos, papéis
+            dos fornecedores e mecanismos de transferência aplicáveis ainda
+            precisam ser documentados. Enquanto essa revisão não for concluída,
+            analytics e Meta Pixel permanecem desativados.
           </p>
-          <p>
-            A LGPD também prevê direitos como confirmar e acessar dados,
-            corrigir informações, solicitar anonimização, bloqueio, eliminação
-            ou portabilidade nos casos aplicáveis, obter informações sobre
-            compartilhamento e revogar o consentimento. Consulte a{' '}
-            <a
-              href="https://www.gov.br/anpd/pt-br/assuntos/titular-de-dados-1/direito-dos-titulares"
-              rel="noreferrer"
-              target="_blank"
-            >
-              orientação da ANPD sobre direitos dos titulares
-            </a>
-            .
-          </p>
-          {trackingEnabled ? (
-            <PrivacySettingsButton />
+          {privacyTransferSummary ? (
+            <p>{privacyTransferSummary}</p>
           ) : (
             <p className="privacy-pending">
-              As preferências serão disponibilizadas quando os IDs e os dados
-              legais de privacidade forem configurados.
+              Destinos e mecanismos legais: pendentes de confirmação. Nenhum
+              mecanismo específico é declarado nesta versão preliminar.
             </p>
           )}
+          <p>
+            <ExternalLink href="https://www.gov.br/anpd/pt-br/acesso-a-informacao/institucional/atos-normativos/regulamentacoes_anpd/resolucao-cd-anpd-no-19-de-23-de-agosto-de-2024">
+              Regulamento de Transferência Internacional de Dados da ANPD
+            </ExternalLink>
+          </p>
+        </section>
+
+        <section aria-labelledby="privacy-retention">
+          <h2 id="privacy-retention">7. Retenção e exclusão</h2>
+          <p>
+            Mantemos dados pelo menor prazo necessário a cada finalidade, mas os
+            períodos específicos ainda precisam ser verificados por tipo de dado
+            e fornecedor. O registro da preferência no navegador não tem
+            expiração automática; você pode removê-lo ao revogar a escolha ou
+            limpar os dados do site no navegador.
+          </p>
+          {privacyRetentionSummary ? (
+            <p>{privacyRetentionSummary}</p>
+          ) : (
+            <p className="privacy-pending">
+              Prazos específicos de logs, mensagens e identificadores de
+              terceiros: pendentes de confirmação.
+            </p>
+          )}
+          {privacyTechnicalLogsSummary ? (
+            <p>{privacyTechnicalLogsSummary}</p>
+          ) : (
+            <p className="privacy-pending">
+              Campos e retenção dos logs técnicos da hospedagem: pendentes de
+              confirmação.
+            </p>
+          )}
+        </section>
+
+        <section aria-labelledby="privacy-rights">
+          <h2 id="privacy-rights">8. Seus direitos e como solicitá-los</h2>
+          <p>
+            A LGPD prevê, conforme aplicável, confirmação e acesso aos dados,
+            correção, anonimização, bloqueio ou eliminação de dados
+            desnecessários ou tratados em desconformidade, portabilidade nos
+            termos da regulamentação, informação sobre compartilhamento,
+            informação sobre consentimento e sua revogação, e oposição nas
+            hipóteses previstas em lei. Também é possível peticionar à ANPD.
+          </p>
+          <p>
+            Para pedir acesso, correção ou exclusão, escreva para{' '}
+            <a href={privacyContactUrl}>{privacyContactLabel}</a>, descreva o
+            pedido e indique a página ou o tratamento a que se refere. O
+            responsável fará o atendimento manualmente e poderá solicitar
+            informações proporcionais para confirmar a identidade antes de agir.
+            Não envie senha, dados de pagamento ou documentos além do necessário
+            para essa confirmação.
+          </p>
+          <p>
+            <ExternalLink href="https://www.gov.br/anpd/pt-br/assuntos/titular-de-dados/direito-dos-titulares">
+              Orientação da ANPD sobre direitos dos titulares
+            </ExternalLink>
+          </p>
+          <PrivacySettingsButton />
+        </section>
+
+        <section aria-labelledby="privacy-security">
+          <h2 id="privacy-security">9. Segurança</h2>
+          <p>
+            A landing page é estática, não oferece formulário nem processa
+            pagamentos. Scripts opcionais só podem ser carregados após a revisão
+            das informações e a escolha afirmativa correspondente. A
+            infraestrutura de hospedagem e cada fornecedor mantêm controles
+            próprios; detalhes específicos de logs e salvaguardas de
+            transferências ainda precisam ser confirmados. Nenhuma medida
+            elimina todos os riscos.
+          </p>
+        </section>
+
+        <section aria-labelledby="privacy-changes">
+          <h2 id="privacy-changes">10. Atualizações deste aviso</h2>
+          <p>
+            Atualizaremos esta página quando as práticas ou as informações
+            confirmadas mudarem. Uma alteração que mude a finalidade ou as
+            categorias opcionais exigirá nova escolha antes de carregar os
+            respectivos rastreadores.
+          </p>
+          <p>Última atualização: 29 de outubro de 2026.</p>
         </section>
 
         {!privacyDisclosureReady ? (
           <p className="privacy-update-note">
-            Rastreadores opcionais permanecem desativados até a confirmação da
-            identificação legal, do canal de privacidade e dos prazos de
-            retenção.
+            A versão definitiva depende do preenchimento e da aprovação dos
+            dados listados no checklist interno de conformidade. Esta página
+            permanece fora do índice de busca enquanto essa revisão estiver
+            pendente.
           </p>
         ) : null}
       </main>
+      <SiteFooter />
     </>
   );
 }

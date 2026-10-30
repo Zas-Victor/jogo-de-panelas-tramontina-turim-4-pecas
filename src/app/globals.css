@@ -1378,6 +1378,12 @@ img {
   line-height: 1.55;
 }
 
+.privacy-consent-copy .privacy-essential-note {
+  margin-top: -8px;
+  color: #736d66;
+  font-size: 11px;
+}
+
 .privacy-options {
   display: grid;
   gap: 10px;
@@ -1401,6 +1407,11 @@ img {
   background: white;
   padding: 11px 12px;
   cursor: pointer;
+}
+
+.privacy-options label:has(input:disabled) {
+  background: #f7f4ef;
+  cursor: not-allowed;
 }
 
 .privacy-options input {
@@ -1529,6 +1540,25 @@ img {
   color: #7c4b31;
   font-weight: 700;
   text-underline-offset: 3px;
+  overflow-wrap: anywhere;
+}
+
+.privacy-page .privacy-settings-button {
+  color: #7c4b31;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.privacy-page .privacy-settings-button:hover {
+  color: #a5481f;
+}
+
+.privacy-page code {
+  border-radius: 5px;
+  background: #eee8df;
+  padding: 2px 5px;
+  font-size: 0.9em;
+  overflow-wrap: anywhere;
 }
 
 .privacy-pending,

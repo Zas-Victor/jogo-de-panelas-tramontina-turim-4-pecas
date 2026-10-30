@@ -2,20 +2,13 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { PrivacySettingsButton } from '@/components/analytics-consent';
 import { brandLogo } from '@/lib/product-data';
-import {
-  ga4MeasurementId,
-  metaPixelId,
-  privacyDisclosureReady,
-} from '@/lib/site-config';
-
-const canManagePrivacy =
-  privacyDisclosureReady && Boolean(ga4MeasurementId || metaPixelId);
 
 const footerLinks = [
   { href: '#inicio', label: 'Voltar ao início' },
   { href: '#antes-de-comprar', label: 'Transparência e informações' },
   { href: '#duvidas', label: 'Perguntas frequentes' },
-  { href: '/privacidade', label: 'Privacidade e cookies' },
+  { href: '/privacidade', label: 'Política de privacidade' },
+  { href: '/cookies', label: 'Política de cookies' },
 ];
 
 export function SiteFooter() {
@@ -60,7 +53,7 @@ export function SiteFooter() {
           anúncio de destino.
         </p>
 
-        {canManagePrivacy ? <PrivacySettingsButton /> : null}
+        <PrivacySettingsButton />
 
         <div className="footer-bottom">
           <span>© Kynovra Deals · Kynovra Solutions</span>

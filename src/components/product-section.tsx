@@ -60,7 +60,7 @@ export function ProductSection() {
             </p>
           </div>
           <AffiliateCta className="button-primary product-note-cta">
-            Conferir preço
+            Conferir preço no Mercado Livre
           </AffiliateCta>
         </div>
       </div>
@@ -123,7 +123,7 @@ export function ProductDetailsSection() {
             a descrição do anúncio de destino antes de comprar.
           </p>
           <AffiliateCta className="button-dark details-cta">
-            Conferir preço
+            Conferir preço no Mercado Livre
           </AffiliateCta>
         </div>
       </div>

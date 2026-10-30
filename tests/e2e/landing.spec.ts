@@ -9,9 +9,11 @@ const viewports = [
 ];
 
 const privacyConfigPresent = Boolean(
-  process.env.NEXT_PUBLIC_PRIVACY_CONTACT_URL &&
-    process.env.NEXT_PUBLIC_PRIVACY_CONTROLLER_NAME &&
-    process.env.NEXT_PUBLIC_PRIVACY_RETENTION_SUMMARY,
+  process.env.NEXT_PUBLIC_PRIVACY_CONTROLLER_NAME &&
+    process.env.NEXT_PUBLIC_PRIVACY_RETENTION_SUMMARY &&
+    process.env.NEXT_PUBLIC_PRIVACY_TRANSFER_SUMMARY &&
+    process.env.NEXT_PUBLIC_PRIVACY_TECHNICAL_LOGS_SUMMARY &&
+    process.env.NEXT_PUBLIC_PRIVACY_NOTICE_APPROVED === 'true',
 );
 const analyticsTestEnabled = Boolean(
   privacyConfigPresent && process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID,
@@ -29,7 +31,7 @@ async function rejectOptionalTracking(page: import('@playwright/test').Page) {
   }
 
   const hasSavedChoice = await page.evaluate(() =>
-    localStorage.getItem('kynovra-privacy-consent-v1'),
+    localStorage.getItem('kynovra-privacy-consent-v2'),
   );
   if (hasSavedChoice) {
     return;
@@ -44,17 +46,11 @@ async function rejectOptionalTracking(page: import('@playwright/test').Page) {
 }
 
 async function triggerAffiliateClick(page: import('@playwright/test').Page) {
-  await page
-    .locator('a[data-affiliate-cta="mercadolivre"]')
-    .first()
-    .evaluate((element) => {
-      element.addEventListener('click', (event) => event.preventDefault(), {
-        once: true,
-      });
-      element.dispatchEvent(
-        new MouseEvent('click', { bubbles: true, cancelable: true }),
-      );
-    });
+  await page.context().route('https://meli.la/**', (route) => route.abort());
+  const popupPromise = page.waitForEvent('popup');
+  await page.locator('a[data-affiliate-cta="mercadolivre"]').first().click();
+  const popup = await popupPromise;
+  await popup.close();
 }
 
 test('renders the landing page without horizontal overflow', async ({
@@ -204,7 +200,9 @@ test('affiliate actions use the official short URL unchanged', async ({
 
   expect(destinations.length).toBeGreaterThan(0);
   expect(new Set(destinations)).toEqual(new Set(['https://meli.la/1REfxSi']));
-  await expect(affiliateLinks.first()).toHaveAccessibleName('Conferir preço');
+  await expect(affiliateLinks.first()).toHaveAccessibleName(
+    'Conferir preço no Mercado Livre',
+  );
   await expect(affiliateLinks.first()).toHaveAttribute('target', '_blank');
   await expect(affiliateLinks.first()).toHaveAttribute(
     'rel',
@@ -270,7 +268,7 @@ test('in-page links resolve and the complete FAQ is keyboard operable', async ({
   }
 });
 
-test('privacy notice is reachable and keyboard navigation exposes the skip link', async ({
+test('privacy and cookies routes are reachable and the settings panel is keyboard accessible', async ({
   page,
 }) => {
   await page.goto('/');
@@ -280,19 +278,59 @@ test('privacy notice is reachable and keyboard navigation exposes the skip link'
   ).toBeFocused();
   await rejectOptionalTracking(page);
 
-  await page.getByRole('link', { name: 'Privacidade e cookies' }).click();
+  await page.getByRole('link', { name: 'Política de privacidade' }).click();
   await expect(
-    page.getByRole('heading', { name: 'Privacidade e cookies' }),
+    page.getByRole('heading', { name: 'Aviso de Privacidade' }),
   ).toBeVisible();
 
-  if (consentTestEnabled) {
-    await page
-      .getByRole('button', { name: 'Gerenciar consentimento de cookies' })
-      .click();
-    await expect(
-      page.getByRole('button', { name: 'Salvar escolhas' }),
-    ).toBeVisible();
-  }
+  await expect(page.getByText('Documento preliminar')).toBeVisible();
+  await page
+    .getByRole('button', { name: 'Preferências de cookies' })
+    .last()
+    .click();
+  await expect(
+    page.getByRole('heading', { name: 'Preferências de cookies' }),
+  ).toBeFocused();
+  await page.keyboard.press('Escape');
+  await expect(
+    page.getByRole('button', { name: 'Preferências de cookies' }).last(),
+  ).toBeFocused();
+
+  await page
+    .locator('.footer-nav')
+    .getByRole('link', { name: 'Política de cookies' })
+    .click();
+  await expect(
+    page.getByRole('heading', { name: 'Política de Cookies' }),
+  ).toBeVisible();
+  await expect(page.getByText('kynovra-privacy-consent-v2')).toBeVisible();
+});
+
+test('cookie preferences remain available without tracker IDs and keep scripts unloaded', async ({
+  page,
+}) => {
+  test.skip(analyticsTestEnabled || marketingTestEnabled);
+  await page.goto('/');
+
+  await page.getByRole('button', { name: 'Preferências de cookies' }).click();
+  await expect(
+    page.getByRole('heading', { name: 'Preferências de cookies' }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('checkbox', { name: /Analytics/ }),
+  ).toBeDisabled();
+  await expect(
+    page.getByRole('checkbox', { name: /Marketing/ }),
+  ).toBeDisabled();
+  await expect(page.locator('#kynovra-ga4-script')).toHaveCount(0);
+  await expect(page.locator('#kynovra-meta-pixel-script')).toHaveCount(0);
+
+  await page.getByRole('button', { name: 'Salvar preferências' }).click();
+  const storedChoice = await page.evaluate(() =>
+    localStorage.getItem('kynovra-privacy-consent-v2'),
+  );
+  expect(storedChoice).toContain('"analytics":false');
+  expect(storedChoice).toContain('"marketing":false');
 });
 
 test('consent rejection keeps both optional trackers unloaded', async ({
@@ -316,15 +354,15 @@ test('consent rejection keeps both optional trackers unloaded', async ({
   await expect(page.locator('#kynovra-meta-pixel-script')).toHaveCount(0);
 
   const storedChoice = await page.evaluate(() =>
-    localStorage.getItem('kynovra-privacy-consent-v1'),
+    localStorage.getItem('kynovra-privacy-consent-v2'),
   );
   expect(storedChoice).toContain('"analytics":false');
   expect(storedChoice).toContain('"marketing":false');
 
   await page.reload();
-  await expect(page.getByRole('button', { name: 'Aceitar todos' })).toHaveCount(
-    0,
-  );
+  await expect(
+    page.getByRole('button', { name: 'Aceitar opcionais' }),
+  ).toHaveCount(0);
   await expect(page.locator('#kynovra-ga4-script')).toHaveCount(0);
   await expect(page.locator('#kynovra-meta-pixel-script')).toHaveCount(0);
 });
@@ -345,9 +383,11 @@ test('analytics consent records product and affiliate clicks with UTMs', async (
     page.locator('a[data-affiliate-cta="mercadolivre"]').first(),
   ).toHaveAttribute('href', 'https://meli.la/1REfxSi');
   await page.getByRole('button', { name: 'Personalizar' }).click();
-  await page.getByRole('checkbox').nth(0).check();
-  await page.getByRole('checkbox').nth(1).uncheck();
-  await page.getByRole('button', { name: 'Salvar escolhas' }).click();
+  await page.getByRole('checkbox', { name: /Analytics/ }).check();
+  if (marketingTestEnabled) {
+    await page.getByRole('checkbox', { name: /Marketing/ }).uncheck();
+  }
+  await page.getByRole('button', { name: 'Salvar preferências' }).click();
 
   await expect(page.locator('#kynovra-ga4-script')).toHaveCount(1);
   await expect(page.locator('#kynovra-meta-pixel-script')).toHaveCount(0);
@@ -403,9 +443,11 @@ test('marketing consent records Meta view and affiliate events without GA4', asy
 
   await page.goto('/?utm_source=facebook&utm_content=carousel-02');
   await page.getByRole('button', { name: 'Personalizar' }).click();
-  await page.getByRole('checkbox').nth(0).uncheck();
-  await page.getByRole('checkbox').nth(1).check();
-  await page.getByRole('button', { name: 'Salvar escolhas' }).click();
+  if (analyticsTestEnabled) {
+    await page.getByRole('checkbox', { name: /Analytics/ }).uncheck();
+  }
+  await page.getByRole('checkbox', { name: /Marketing/ }).check();
+  await page.getByRole('button', { name: 'Salvar preferências' }).click();
 
   await expect(page.locator('#kynovra-meta-pixel-script')).toHaveCount(1);
   await expect(page.locator('#kynovra-ga4-script')).toHaveCount(0);
@@ -443,4 +485,68 @@ test('marketing consent records Meta view and affiliate events without GA4', asy
     );
   });
   expect(hasPurchaseEvent).toBeFalsy();
+});
+
+test('revoking categories blocks future tracking and clears known first-party identifiers', async ({
+  page,
+}) => {
+  test.skip(!consentTestEnabled);
+  await page.route('https://www.googletagmanager.com/**', (route) =>
+    route.abort(),
+  );
+  await page.route('https://connect.facebook.net/**', (route) => route.abort());
+
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Aceitar opcionais' }).click();
+  await expect(page.locator('#kynovra-ga4-script')).toHaveCount(
+    analyticsTestEnabled ? 1 : 0,
+  );
+  await expect(page.locator('#kynovra-meta-pixel-script')).toHaveCount(
+    marketingTestEnabled ? 1 : 0,
+  );
+
+  await page.context().addCookies([
+    { name: '_ga', value: 'test', url: 'http://127.0.0.1:3000' },
+    { name: '_fbp', value: 'test', url: 'http://127.0.0.1:3000' },
+  ]);
+  await page.getByRole('button', { name: 'Preferências de cookies' }).click();
+  if (analyticsTestEnabled) {
+    await page.getByRole('checkbox', { name: /Analytics/ }).uncheck();
+  }
+  if (marketingTestEnabled) {
+    await page.getByRole('checkbox', { name: /Marketing/ }).uncheck();
+  }
+  await page.getByRole('button', { name: 'Salvar preferências' }).click();
+
+  await expect
+    .poll(() => page.evaluate(() => document.cookie))
+    .not.toContain('_ga=');
+  await expect
+    .poll(() => page.evaluate(() => document.cookie))
+    .not.toContain('_fbp=');
+
+  const deniedAnalytics = await page.evaluate(() => {
+    const entries =
+      (window as Window & { dataLayer?: unknown[][] }).dataLayer ?? [];
+    return entries.some(
+      (entry) =>
+        entry[0] === 'consent' &&
+        entry[1] === 'update' &&
+        (entry[2] as Record<string, unknown>).analytics_storage === 'denied',
+    );
+  });
+  if (analyticsTestEnabled) {
+    expect(deniedAnalytics).toBe(true);
+  }
+
+  const revokedMarketing = await page.evaluate(() => {
+    const queue = (window as Window & { fbq?: { queue: unknown[][] } }).fbq
+      ?.queue;
+    return queue?.some(
+      (entry) => entry[0] === 'consent' && entry[1] === 'revoke',
+    );
+  });
+  if (marketingTestEnabled) {
+    expect(revokedMarketing).toBe(true);
+  }
 });

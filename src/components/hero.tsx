@@ -47,7 +47,7 @@ export function Hero() {
 
           <div className="hero-actions">
             <AffiliateCta className="button-primary hero-primary">
-              Conferir preço
+              Conferir preço no Mercado Livre
             </AffiliateCta>
             <Link className="button-secondary" href="#beneficios">
               Descobrir benefícios

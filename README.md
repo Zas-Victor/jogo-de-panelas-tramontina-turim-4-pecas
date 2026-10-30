@@ -20,7 +20,7 @@ Para validar antes de publicar: `pnpm lint`, `pnpm typecheck`, `pnpm build` e `p
 
 Copie `.env.example` para `.env.local`. `NEXT_PUBLIC_SITE_URL` deve conter a origem HTTPS canônica. Na Vercel, se não for definido, a página usa `VERCEL_PROJECT_PRODUCTION_URL` e depois `VERCEL_URL` para canonical, Open Graph, sitemap e robots.
 
-Os IDs opcionais são `NEXT_PUBLIC_GA_MEASUREMENT_ID` e `NEXT_PUBLIC_META_PIXEL_ID`. Só use IDs públicos. O carregamento exige também `NEXT_PUBLIC_PRIVACY_CONTROLLER_NAME`, `NEXT_PUBLIC_PRIVACY_CONTACT_URL` (canal oficial HTTPS ou mailto) e `NEXT_PUBLIC_PRIVACY_RETENTION_SUMMARY`, além do consentimento correspondente do visitante. Sem essa configuração, os rastreadores permanecem desativados e os links comerciais funcionam.
+Os IDs opcionais são `NEXT_PUBLIC_GA_MEASUREMENT_ID` e `NEXT_PUBLIC_META_PIXEL_ID`. Só use IDs públicos. Os scripts exigem consentimento por categoria e revisão concluída, indicada por `NEXT_PUBLIC_PRIVACY_NOTICE_APPROVED=true` junto com controlador, retenção, transferências internacionais e detalhes dos logs técnicos confirmados. O contato confirmado é `contato@kynovra.digital`. Consulte `docs/legal-release-checklist.md`; não marque o aviso como aprovado antes de concluir a revisão. Sem a configuração completa, os rastreadores permanecem desativados e os links comerciais funcionam.
 
 Todas as CTAs comerciais levam ao link fixo `https://meli.la/1REfxSi`, sem alteração de parâmetros.
 

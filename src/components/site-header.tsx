@@ -52,8 +52,11 @@ export function SiteHeader() {
             ))}
           </nav>
 
-          <AffiliateCta ariaLabel="Conferir preço" className="header-cta">
-            Conferir preço
+          <AffiliateCta
+            ariaLabel="Conferir preço no Mercado Livre"
+            className="header-cta"
+          >
+            Conferir preço no Mercado Livre
           </AffiliateCta>
         </div>
       </header>

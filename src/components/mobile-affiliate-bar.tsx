@@ -34,7 +34,7 @@ export function MobileAffiliateBar() {
       inert={!isVisible}
     >
       <AffiliateCta className="button-primary mobile-affiliate-button">
-        Conferir preço
+        Conferir preço no Mercado Livre
       </AffiliateCta>
     </div>
   );
