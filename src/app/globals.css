@@ -310,6 +310,17 @@ img {
   margin-bottom: 25px;
 }
 
+.hero-meta-copy {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+}
+
+.hero-meta-product-image {
+  display: none;
+}
+
 .hero-pill {
   display: inline-flex;
   min-height: 38px;
@@ -1701,14 +1712,32 @@ img {
 
   .hero-inner {
     gap: 18px;
-    padding-block: 26px 30px;
+    padding-block: 22px 30px;
   }
 
   .hero-meta {
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .hero-meta-copy {
+    min-width: 0;
     align-items: flex-start;
     flex-direction: column;
-    gap: 9px;
-    margin-bottom: 15px;
+    gap: 7px;
+  }
+
+  .hero-meta-product-image {
+    display: block;
+    width: 64px;
+    height: 64px;
+    flex: 0 0 64px;
+    border: 1px solid rgb(255 255 255 / 14%);
+    border-radius: 12px;
+    background: #fbf9f5;
+    padding: 3px;
   }
 
   .hero-pill {
@@ -1717,7 +1746,8 @@ img {
   }
 
   .hero-product-name {
-    font-size: 10px;
+    font-size: 9px;
+    letter-spacing: 0.1em;
   }
 
   .hero-title {
@@ -1727,7 +1757,7 @@ img {
   }
 
   .hero-description {
-    margin-block: 14px;
+    margin-block: 12px;
     font-size: 14px;
     line-height: 1.6;
   }

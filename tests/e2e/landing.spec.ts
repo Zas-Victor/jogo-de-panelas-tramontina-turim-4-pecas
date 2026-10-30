@@ -64,7 +64,9 @@ test('renders the landing page without horizontal overflow', async ({
     await expect(page.getByRole('heading', { level: 1 })).toContainText(
       'Jogo de Panelas Tramontina Turim 4 peças',
     );
-    await expect(page.locator('main img')).toHaveCount(8);
+    await expect(
+      page.locator('main img:not(.hero-meta-product-image)'),
+    ).toHaveCount(8);
 
     const documentWidth = await page.evaluate(
       () => document.documentElement.scrollWidth,
@@ -81,6 +83,22 @@ test('renders the landing page without horizontal overflow', async ({
     if (viewport.width <= 639) {
       const stickyCta = page.locator('.mobile-affiliate-bar');
       await expect(stickyCta).toHaveCSS('visibility', 'hidden');
+      const heroThumbnail = page.locator('.hero-meta-product-image');
+      await expect(heroThumbnail).toBeVisible();
+      await expect
+        .poll(() =>
+          heroThumbnail.evaluate(
+            (image: HTMLImageElement) => image.naturalWidth,
+          ),
+        )
+        .toBeGreaterThan(0);
+      const heroCtaBounds = await page.locator('.hero-primary').boundingBox();
+      if (!heroCtaBounds) {
+        throw new Error('Hero CTA should have visible bounds on mobile');
+      }
+      expect(heroCtaBounds.y + heroCtaBounds.height).toBeLessThanOrEqual(
+        viewport.height,
+      );
       await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
       await expect(stickyCta).toHaveCSS('visibility', 'visible');
     }
@@ -190,7 +208,7 @@ test('all page images load and have descriptive alternatives', async ({
   await page.setViewportSize({ width: 1440, height: 960 });
   await page.goto('/');
 
-  const images = page.locator('main img');
+  const images = page.locator('main img:not(.hero-meta-product-image)');
   await expect(images).toHaveCount(8);
 
   for (let index = 0; index < (await images.count()); index += 1) {

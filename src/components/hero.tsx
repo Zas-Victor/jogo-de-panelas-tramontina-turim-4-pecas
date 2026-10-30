@@ -11,10 +11,22 @@ export function Hero() {
       <div className="hero-inner page-shell">
         <div className="hero-copy">
           <div className="hero-meta">
-            <span className="hero-pill">Seleção Kynovra Deals</span>
-            <span className="hero-product-name">
-              TRAMONTINA TURIM · 4 PEÇAS
-            </span>
+            <div className="hero-meta-copy">
+              <span className="hero-pill">Seleção Kynovra Deals</span>
+              <span className="hero-product-name">
+                TRAMONTINA TURIM · 4 PEÇAS
+              </span>
+            </div>
+            <Image
+              alt=""
+              aria-hidden="true"
+              className="hero-meta-product-image"
+              height={64}
+              loading="lazy"
+              sizes="64px"
+              src={heroProductImage}
+              width={64}
+            />
           </div>
 
           <h1 className="hero-title" id="hero-title">
