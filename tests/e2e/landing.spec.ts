@@ -66,7 +66,15 @@ test('renders the landing page without horizontal overflow', async ({
     );
     await expect(
       page.locator('main img:not(.hero-meta-product-image)'),
-    ).toHaveCount(8);
+    ).toHaveCount(16);
+
+    const testimonialColumns = await page
+      .locator('.testimonials-grid')
+      .evaluate((grid) => getComputedStyle(grid).gridTemplateColumns);
+    const testimonialColumnCount = testimonialColumns.split(' ').length;
+    expect(testimonialColumnCount).toBe(
+      viewport.width <= 639 ? 1 : viewport.width <= 1023 ? 2 : 3,
+    );
 
     const documentWidth = await page.evaluate(
       () => document.documentElement.scrollWidth,
@@ -209,7 +217,7 @@ test('all page images load and have descriptive alternatives', async ({
   await page.goto('/');
 
   const images = page.locator('main img:not(.hero-meta-product-image)');
-  await expect(images).toHaveCount(8);
+  await expect(images).toHaveCount(16);
 
   for (let index = 0; index < (await images.count()); index += 1) {
     const image = images.nth(index);
@@ -222,6 +230,149 @@ test('all page images load and have descriptive alternatives', async ({
       .toBeGreaterThan(0);
     await expect(image).not.toHaveAttribute('alt', '');
   }
+});
+
+test('testimonial copy, ratings, sources, and photos match the supplied reviews', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await rejectOptionalTracking(page);
+
+  const section = page.locator('#depoimentos');
+  await expect(
+    section.getByRole('heading', { name: 'Quem comprou, conta como foi' }),
+  ).toBeVisible();
+
+  const expectedReviews = [
+    {
+      number: '01',
+      text: 'Produto de qualidade, tramontina não tem erro, panelas pequenas pra duas ou três pessoas no máximo.',
+      photoCount: 3,
+      photoIds: [
+        'depoimento-01-foto-01',
+        'depoimento-01-foto-02',
+        'depoimento-01-foto-03',
+      ],
+    },
+    {
+      number: '02',
+      text: 'Comprei de presente pra minha filha e ela amou.',
+      photoCount: 2,
+      photoIds: ['depoimento-02-foto-01', 'depoimento-02-foto-02'],
+    },
+    {
+      number: '03',
+      text: 'Material material de alta qualidade. Super indico. São meio pequenas mais são boas as panelas. Top.',
+      photoCount: 3,
+      photoIds: [
+        'depoimento-03-foto-01',
+        'depoimento-03-foto-02',
+        'depoimento-03-miniatura-video',
+      ],
+    },
+  ];
+
+  const cards = section.locator('.testimonial-card');
+  await expect(cards).toHaveCount(3);
+  for (let index = 0; index < expectedReviews.length; index += 1) {
+    const review = expectedReviews[index];
+    const card = cards.nth(index);
+    await expect(card.locator('blockquote')).toHaveText(review.text);
+    await expect(
+      card.getByRole('img', { name: '5 de 5 estrelas' }),
+    ).toBeVisible();
+    await expect(
+      card.getByText('Fonte: avaliação publicada no Mercado Livre.'),
+    ).toBeVisible();
+    await expect(
+      card.getByTestId(`testimonial-gallery-${review.number}`),
+    ).toHaveAttribute('data-photo-count', String(review.photoCount));
+    await expect(card.locator('.testimonial-gallery-button')).toHaveCount(
+      review.photoCount,
+    );
+    await expect(
+      card
+        .locator('.testimonial-gallery-button')
+        .evaluateAll((buttons) =>
+          buttons.map((button) => button.getAttribute('data-photo-id')),
+        ),
+    ).resolves.toEqual(review.photoIds);
+  }
+
+  await expect(section.locator('video')).toHaveCount(0);
+  await expect(
+    section.getByText('Miniatura estática', { exact: true }),
+  ).toBeVisible();
+  await expect(section.getByText(/não realizou essas vendas/)).toBeVisible();
+
+  const productJsonLd = await page
+    .locator('script[type="application/ld+json"]')
+    .textContent();
+  expect(productJsonLd).not.toContain('AggregateRating');
+  expect(productJsonLd).not.toContain('review');
+});
+
+test('testimonial lightbox supports keyboard navigation, Escape, and focus return', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await rejectOptionalTracking(page);
+
+  const photoButton = page
+    .getByTestId('testimonial-gallery-01')
+    .locator('button')
+    .first();
+  await photoButton.scrollIntoViewIfNeeded();
+  await photoButton.click();
+
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toBeVisible();
+  await expect(
+    dialog.getByRole('button', { name: 'Fechar visualização da foto' }),
+  ).toBeFocused();
+  await page.keyboard.press('Shift+Tab');
+  await expect(
+    dialog.getByRole('button', { name: 'Próxima foto' }),
+  ).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(
+    dialog.getByRole('button', { name: 'Fechar visualização da foto' }),
+  ).toBeFocused();
+  await expect
+    .poll(() =>
+      dialog
+        .locator('img')
+        .evaluate((image: HTMLImageElement) => image.naturalWidth),
+    )
+    .toBeGreaterThan(0);
+  const imageRatio = await dialog
+    .locator('img')
+    .evaluate((image: HTMLImageElement) => {
+      const bounds = image.getBoundingClientRect();
+      return bounds.width / bounds.height;
+    });
+  const naturalImageRatio = await dialog
+    .locator('img')
+    .evaluate(
+      (image: HTMLImageElement) => image.naturalWidth / image.naturalHeight,
+    );
+  expect(imageRatio).toBeCloseTo(naturalImageRatio, 2);
+  await page.keyboard.press('ArrowRight');
+  await expect(
+    dialog.locator('.testimonial-lightbox-navigation [aria-live]'),
+  ).toHaveText('Foto 2 de 3');
+  await page.keyboard.press('ArrowLeft');
+  await expect(
+    dialog.locator('.testimonial-lightbox-navigation [aria-live]'),
+  ).toHaveText('Foto 1 de 3');
+  await dialog.getByRole('button', { name: 'Próxima foto' }).click();
+  await expect(
+    dialog.locator('.testimonial-lightbox-navigation [aria-live]'),
+  ).toHaveText('Foto 2 de 3');
+
+  await page.keyboard.press('Escape');
+  await expect(dialog).not.toBeVisible();
+  await expect(photoButton).toBeFocused();
 });
 
 test('key text colors meet WCAG AA contrast on their rendered backgrounds', async ({

@@ -14,6 +14,7 @@ import {
 } from '@/components/routine-section';
 import { SiteFooter } from '@/components/site-footer';
 import { SiteHeader } from '@/components/site-header';
+import { TestimonialsSection } from '@/components/testimonials-section';
 import { TrustSection } from '@/components/trust-section';
 import { heroProductImage } from '@/lib/product-data';
 import { mercadolivreAffiliateUrl } from '@/lib/site-config';
@@ -129,6 +130,7 @@ export default function HomePage() {
         <BenefitsSection />
         <ProductSection />
         <ProductDetailsSection />
+        <TestimonialsSection />
         <TrustSection />
         <FaqSection />
         <FinalCta />
