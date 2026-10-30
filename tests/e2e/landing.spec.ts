@@ -283,7 +283,10 @@ test('privacy and cookies routes are reachable and the settings panel is keyboar
     page.getByRole('heading', { name: 'Aviso de Privacidade' }),
   ).toBeVisible();
 
-  await expect(page.getByText('Documento preliminar')).toBeVisible();
+  await expect(page.getByText('Documento preliminar')).toHaveCount(0);
+  await expect(
+    page.getByText(/nome civil pendente de confirmação/),
+  ).toBeVisible();
   await page
     .getByRole('button', { name: 'Preferências de cookies' })
     .last()

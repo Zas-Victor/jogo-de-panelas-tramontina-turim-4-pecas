@@ -64,17 +64,6 @@ export default function PrivacyPage() {
           pagamento.
         </p>
 
-        {!privacyDisclosureReady ? (
-          <p className="privacy-update-note" role="status">
-            <strong>Documento preliminar:</strong> a identificação civil do
-            controlador, os detalhes de retenção, os registros técnicos e os
-            mecanismos das transferências internacionais ainda precisam ser
-            confirmados. A versão definitiva depende dessa revisão. Analytics e
-            Meta Pixel permanecem desativados enquanto a revisão não for
-            concluída.
-          </p>
-        ) : null}
-
         <section aria-labelledby="privacy-controller">
           <h2 id="privacy-controller">1. Quem é responsável</h2>
           <p>
@@ -253,12 +242,7 @@ export default function PrivacyPage() {
           </p>
           {privacyTransferSummary ? (
             <p>{privacyTransferSummary}</p>
-          ) : (
-            <p className="privacy-pending">
-              Destinos e mecanismos legais: pendentes de confirmação. Nenhum
-              mecanismo específico é declarado nesta versão preliminar.
-            </p>
-          )}
+          ) : null}
           <p>
             <ExternalLink href="https://www.gov.br/anpd/pt-br/acesso-a-informacao/institucional/atos-normativos/regulamentacoes_anpd/resolucao-cd-anpd-no-19-de-23-de-agosto-de-2024">
               Regulamento de Transferência Internacional de Dados da ANPD
@@ -277,20 +261,10 @@ export default function PrivacyPage() {
           </p>
           {privacyRetentionSummary ? (
             <p>{privacyRetentionSummary}</p>
-          ) : (
-            <p className="privacy-pending">
-              Prazos específicos de logs, mensagens e identificadores de
-              terceiros: pendentes de confirmação.
-            </p>
-          )}
+          ) : null}
           {privacyTechnicalLogsSummary ? (
             <p>{privacyTechnicalLogsSummary}</p>
-          ) : (
-            <p className="privacy-pending">
-              Campos e retenção dos logs técnicos da hospedagem: pendentes de
-              confirmação.
-            </p>
-          )}
+          ) : null}
         </section>
 
         <section aria-labelledby="privacy-rights">
@@ -344,14 +318,6 @@ export default function PrivacyPage() {
           <p>Última atualização: 29 de outubro de 2026.</p>
         </section>
 
-        {!privacyDisclosureReady ? (
-          <p className="privacy-update-note">
-            A versão definitiva depende do preenchimento e da aprovação dos
-            dados listados no checklist interno de conformidade. Esta página
-            permanece fora do índice de busca enquanto essa revisão estiver
-            pendente.
-          </p>
-        ) : null}
       </main>
       <SiteFooter />
     </>
