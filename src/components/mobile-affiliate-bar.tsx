@@ -33,7 +33,10 @@ export function MobileAffiliateBar() {
       className={`mobile-affiliate-bar${isVisible ? ' is-visible' : ''}`}
       inert={!isVisible}
     >
-      <AffiliateCta className="button-primary mobile-affiliate-button">
+      <AffiliateCta
+        className="button-primary mobile-affiliate-button"
+        placement="mobile-sticky"
+      >
         Conferir preço no Mercado Livre
       </AffiliateCta>
     </div>

@@ -1,12 +1,13 @@
 import { expect, test } from '@playwright/test';
 
 const viewports = [
-  { width: 320, height: 740 },
-  { width: 375, height: 812 },
-  { width: 390, height: 812 },
+  { width: 320, height: 568 },
+  { width: 375, height: 667 },
+  { width: 390, height: 844 },
+  { width: 430, height: 932 },
   { width: 768, height: 1024 },
-  { width: 1024, height: 900 },
-  { width: 1440, height: 960 },
+  { width: 1024, height: 768 },
+  { width: 1440, height: 900 },
 ];
 
 const privacyConfigPresent = Boolean(
@@ -107,8 +108,8 @@ test('privacy and cookies pages remain responsive at target widths', async ({
 test('cookie preferences fit narrow screens and restore keyboard focus', async ({
   page,
 }) => {
-  for (const width of [320, 375, 390]) {
-    await page.setViewportSize({ width, height: 812 });
+  for (const viewport of viewports.slice(0, 4)) {
+    await page.setViewportSize(viewport);
     await page.goto('/');
 
     const trigger = page.getByRole('button', {
@@ -127,10 +128,59 @@ test('cookie preferences fit narrow screens and restore keyboard focus', async (
     const documentWidth = await page.evaluate(
       () => document.documentElement.scrollWidth,
     );
-    expect(documentWidth).toBeLessThanOrEqual(width);
+    expect(documentWidth).toBeLessThanOrEqual(viewport.width);
 
     await page.keyboard.press('Escape');
     await expect(trigger).toBeFocused();
+  }
+});
+
+test('first-visit consent actions fit mobile screens without covering the hero CTA', async ({
+  page,
+}) => {
+  for (const viewport of viewports.slice(0, 4)) {
+    await page.setViewportSize(viewport);
+    await page.goto('/');
+    await page.evaluate(() => {
+      localStorage.removeItem('kynovra-privacy-consent-v2');
+      sessionStorage.removeItem('kynovra-cookie-session-choice-v1');
+    });
+    await page.reload();
+
+    const panel = page.locator('.privacy-consent');
+    await expect(panel).toBeVisible();
+    const bounds = await panel.boundingBox();
+    if (!bounds) throw new Error('Consent panel should have visible bounds');
+    expect(bounds.x).toBeGreaterThanOrEqual(0);
+    expect(bounds.y + bounds.height).toBeLessThanOrEqual(viewport.height);
+
+    for (const name of [
+      'Aceitar opcionais',
+      'Rejeitar opcionais',
+      'Personalizar',
+    ]) {
+      const button = page.getByRole('button', { name, exact: true });
+      await expect(button).toBeVisible();
+      const buttonBounds = await button.boundingBox();
+      if (!buttonBounds) {
+        throw new Error(`${name} should have visible bounds`);
+      }
+      expect(buttonBounds.y + buttonBounds.height).toBeLessThanOrEqual(
+        bounds.y + bounds.height,
+      );
+    }
+
+    await expect(page.locator('.mobile-affiliate-bar')).toHaveCSS(
+      'visibility',
+      'hidden',
+    );
+    await page.getByRole('button', { name: 'Rejeitar opcionais' }).click();
+    await expect(panel).toHaveCount(0);
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    await expect(page.locator('.mobile-affiliate-bar')).toHaveCSS(
+      'visibility',
+      'visible',
+    );
   }
 });
 
@@ -247,6 +297,19 @@ test('affiliate actions use the official short URL unchanged', async ({
 
   expect(destinations.length).toBeGreaterThan(0);
   expect(new Set(destinations)).toEqual(new Set(['https://meli.la/1REfxSi']));
+  const placements = await affiliateLinks.evaluateAll((links) =>
+    links.map((link) => link.getAttribute('data-affiliate-placement')),
+  );
+  expect(new Set(placements)).toEqual(
+    new Set([
+      'header',
+      'hero',
+      'product-summary',
+      'product-details',
+      'final-cta',
+      'mobile-sticky',
+    ]),
+  );
   await expect(affiliateLinks.first()).toHaveAccessibleName(
     'Conferir preço no Mercado Livre',
   );
@@ -302,7 +365,7 @@ test('in-page links resolve and the complete FAQ is keyboard operable', async ({
   expect(missingTargets).toEqual([]);
 
   const questions = page.locator('.faq-item');
-  await expect(questions).toHaveCount(8);
+  await expect(questions).toHaveCount(6);
   for (let index = 0; index < (await questions.count()); index += 1) {
     const question = questions.nth(index);
     await question.locator('summary').focus();
@@ -371,6 +434,9 @@ test('consent prompt opens on entry, remembers the session choice, and shows it 
     page.getByRole('button', { name: 'Personalizar' }),
   ).toBeVisible();
   await expect(
+    page.getByText(/localStorage|sessionStorage|nenhum ID/i),
+  ).toHaveCount(0);
+  await expect(
     page.getByRole('button', { name: 'Alterar consentimento' }),
   ).toHaveCount(0);
 
@@ -417,10 +483,10 @@ test('consent prompt opens on entry, remembers the session choice, and shows it 
   );
   await page.reload();
   await expect(
-    page.getByRole('heading', { name: 'Revise suas preferências de cookies' }),
+    page.getByRole('heading', { name: 'Revise suas preferências' }),
   ).toBeVisible();
   await expect(
-    page.getByText(/Analytics não autorizado; Marketing não autorizado/),
+    page.getByText(/Analytics: recusado; Marketing: recusado/),
   ).toBeVisible();
 });
 
@@ -437,7 +503,7 @@ test('previous choices remain visible when tracking integrations are unavailable
 
   await page.goto('/');
   await expect(
-    page.getByText(/Analytics autorizado; Marketing autorizado/),
+    page.getByText(/Analytics: autorizado; Marketing: autorizado/),
   ).toBeVisible();
   await expect(page.locator('#kynovra-ga4-script')).toHaveCount(0);
   await expect(page.locator('#kynovra-meta-pixel-script')).toHaveCount(0);
@@ -483,12 +549,12 @@ test('return session restores independent consent choices for confirmation or ch
   await page.reload();
 
   await expect(
-    page.getByRole('heading', { name: 'Revise suas preferências de cookies' }),
+    page.getByRole('heading', { name: 'Revise suas preferências' }),
   ).toBeVisible();
   await expect(
     page.getByText(
       new RegExp(
-        `Analytics ${analyticsTestEnabled ? 'autorizado' : 'não autorizado'}; Marketing não autorizado`,
+        `Analytics: ${analyticsTestEnabled ? 'autorizado' : 'recusado'}; Marketing: recusado`,
       ),
     ),
   ).toBeVisible();
@@ -653,6 +719,17 @@ test('analytics consent records product and affiliate clicks with UTMs', async (
       .map((entry) => entry[1]);
   });
   expect(gaEventNames).not.toContain('purchase');
+
+  const affiliateEvents = await page.evaluate(() => {
+    const entries =
+      (window as Window & { dataLayer?: unknown[][] }).dataLayer ?? [];
+    return entries.filter(
+      (entry) =>
+        entry[0] === 'event' && entry[1] === 'affiliate_outbound_click',
+    );
+  });
+  expect(affiliateEvents).toHaveLength(1);
+  expect(affiliateEvents[0]?.[2]).toMatchObject({ cta_position: 'header' });
 });
 
 test('marketing consent records Meta view and affiliate events without GA4', async ({
@@ -693,12 +770,15 @@ test('marketing consent records Meta view and affiliate events without GA4', asy
   const outboundEvents = await page.evaluate(() => {
     const queue = (window as Window & { fbq?: { queue: unknown[][] } }).fbq
       ?.queue;
-    return queue?.filter(
-      (entry) =>
-        entry[0] === 'trackCustom' && entry[1] === 'AffiliateOutboundClick',
-    ).length;
+    return (
+      queue?.filter(
+        (entry) =>
+          entry[0] === 'trackCustom' && entry[1] === 'AffiliateOutboundClick',
+      ) ?? []
+    );
   });
-  expect(outboundEvents).toBe(1);
+  expect(outboundEvents).toHaveLength(1);
+  expect(outboundEvents[0]?.[2]).toMatchObject({ cta_position: 'header' });
 
   const hasPurchaseEvent = await page.evaluate(() => {
     const queue = (window as Window & { fbq?: { queue: unknown[][] } }).fbq

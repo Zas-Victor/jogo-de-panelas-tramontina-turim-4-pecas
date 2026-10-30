@@ -25,7 +25,10 @@ export function FinalCta() {
             disponibilidade no anúncio do Mercado Livre. A decisão é sua, com as
             informações em mãos.
           </p>
-          <AffiliateCta className="button-primary final-cta-button">
+          <AffiliateCta
+            className="button-primary final-cta-button"
+            placement="final-cta"
+          >
             Conferir preço no Mercado Livre
           </AffiliateCta>
           <p className="final-cta-disclosure">

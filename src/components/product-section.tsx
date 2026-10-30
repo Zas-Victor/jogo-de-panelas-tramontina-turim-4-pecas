@@ -59,7 +59,10 @@ export function ProductSection() {
               kit.
             </p>
           </div>
-          <AffiliateCta className="button-primary product-note-cta">
+          <AffiliateCta
+            className="button-primary product-note-cta"
+            placement="product-summary"
+          >
             Conferir preço no Mercado Livre
           </AffiliateCta>
         </div>
@@ -122,7 +125,10 @@ export function ProductDetailsSection() {
             As dimensões exibidas correspondem às peças; confira a composição e
             a descrição do anúncio de destino antes de comprar.
           </p>
-          <AffiliateCta className="button-dark details-cta">
+          <AffiliateCta
+            className="button-dark details-cta"
+            placement="product-details"
+          >
             Conferir preço no Mercado Livre
           </AffiliateCta>
         </div>

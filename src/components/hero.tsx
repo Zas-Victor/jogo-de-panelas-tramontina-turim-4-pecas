@@ -1,14 +1,8 @@
-import { ArrowDown, Check, CookingPot } from 'lucide-react';
+import { ArrowDown, CookingPot } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { AffiliateCta } from '@/components/affiliate-cta';
 import { heroProductImage } from '@/lib/product-data';
-
-const heroPoints = [
-  'Revestimento Starflon Max',
-  'Frigideira, panela, caçarola e fervedor',
-  'Acabamento preto',
-];
 
 export function Hero() {
   return (
@@ -28,25 +22,16 @@ export function Hero() {
             <span>praticidade para os seus dias.</span>
           </h1>
           <p className="hero-description">
-            Do café da manhã ao jantar, um conjunto bem escolhido ajuda a deixar
-            os preparos cotidianos mais simples. A referência 20298044 reúne
-            quatro peças em alumínio com revestimento Starflon Max para
-            diferentes receitas e momentos da sua cozinha.
+            O conjunto reúne frigideira, panela, caçarola e fervedor em alumínio
+            com revestimento antiaderente Starflon Max. Panela e caçarola têm
+            tampa de vidro; não é compatível com indução.
           </p>
 
-          <ul aria-label="Destaques do conjunto" className="hero-highlights">
-            {heroPoints.map((point) => (
-              <li key={point}>
-                <span className="highlight-check">
-                  <Check aria-hidden="true" size={13} strokeWidth={3} />
-                </span>
-                {point}
-              </li>
-            ))}
-          </ul>
-
           <div className="hero-actions">
-            <AffiliateCta className="button-primary hero-primary">
+            <AffiliateCta
+              className="button-primary hero-primary"
+              placement="hero"
+            >
               Conferir preço no Mercado Livre
             </AffiliateCta>
             <Link className="button-secondary" href="#beneficios">
@@ -56,9 +41,8 @@ export function Hero() {
           </div>
 
           <p className="hero-disclosure">
-            A Kynovra Deals, marca da Kynovra Solutions, é afiliada: não fabrica
-            nem vende o produto. Consulte preço, vendedor e condições no anúncio
-            do Mercado Livre.
+            A compra acontece no Mercado Livre. Confira ali preço, frete e
+            condições. A Kynovra Deals é afiliada; não fabrica nem vende.
           </p>
         </div>
 

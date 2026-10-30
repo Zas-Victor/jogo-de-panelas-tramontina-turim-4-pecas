@@ -4,17 +4,17 @@ const questions = [
   {
     question: 'O que vem no Jogo de Panelas Tramontina Turim 4 peças?',
     answer:
-      'A referência apresenta uma frigideira de 18 cm e 0,7 L, uma panela com tampa de 16 cm e 1,4 L, uma caçarola com tampa de 18 cm e 2 L e um fervedor de 12 cm e 1,1 L. Confira o conteúdo descrito no anúncio antes da compra.',
+      'A referência reúne frigideira de 18 cm (0,7 L), panela de 16 cm (1,4 L), caçarola de 18 cm (2 L) e fervedor de 12 cm (1,1 L). A panela e a caçarola acompanham tampas de vidro. Confira a composição no anúncio antes da compra.',
   },
   {
-    question: 'As capacidades são adequadas para qualquer tamanho de família?',
+    question: 'As capacidades atendem às porções que costumo preparar?',
     answer:
-      'As peças têm capacidades compactas, entre 0,7 L e 2 L. Elas atendem a diferentes preparos, mas podem não servir para porções maiores; compare os volumes com o que você costuma cozinhar.',
+      'As peças variam de 0,7 L a 2 L e são voltadas a volumes compactos. Compare as capacidades com o tamanho das porções que você costuma fazer; podem não ser suficientes para receitas maiores.',
   },
   {
-    question: 'O Starflon Max facilita a limpeza?',
+    question: 'Como usar e cuidar do revestimento Starflon Max?',
     answer:
-      'O revestimento Starflon Max é antiaderente e a ficha do modelo informa que as peças podem ser lavadas na máquina de louças. Para preservar o conjunto, siga as orientações atualizadas de uso e limpeza da Tramontina.',
+      'Antes do primeiro uso, a Tramontina recomenda lavar com esponja macia, secar, untar levemente o interior com óleo e aquecer por um ou dois minutos em fogo baixo; depois, deixe esfriar e lave novamente. Use fogo baixo ou médio, utensílios de silicone, nylon ou madeira e evite abrasivos e choque térmico.',
   },
   {
     question: 'Funciona em fogão de indução?',
@@ -22,19 +22,9 @@ const questions = [
       'Não. A referência Turim 20298044 é indicada para fogões a gás, elétricos e vitrocerâmicos com resistência elétrica, não para indução.',
   },
   {
-    question: 'As quatro peças vêm com tampa?',
+    question: 'Quem vende, recebe o pagamento e faz a entrega?',
     answer:
-      'Não. A panela e a caçarola acompanham suas respectivas tampas de vidro. A frigideira e o fervedor não aparecem com tampa na composição de referência.',
-  },
-  {
-    question: 'As imagens incluem alimentos e objetos de decoração?',
-    answer:
-      'Não. Ingredientes, utensílios de apoio e objetos de decoração que aparecem nas imagens não fazem parte do conjunto.',
-  },
-  {
-    question: 'A Kynovra Deals vende ou entrega o produto?',
-    answer:
-      'Não. A Kynovra Deals, marca da Kynovra Solutions, é afiliada e não é fabricante nem vendedora direta. Podemos receber comissão por compras elegíveis feitas pelo link; compra, pagamento e entrega são tratados no anúncio do Mercado Livre.',
+      'A compra e o pagamento são feitos no Mercado Livre, conforme as condições do vendedor do anúncio; a entrega segue as opções exibidas lá. A Kynovra Deals, marca da Kynovra Solutions, é afiliada, não fabrica nem vende o produto e pode receber comissão por compras elegíveis.',
   },
   {
     question: 'Onde vejo o preço e a disponibilidade?',

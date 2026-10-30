@@ -16,7 +16,6 @@ const openConsentEvent = 'kynovra:open-consent-settings';
 const consentDecisionChangedEvent = 'kynovra:consent-decision-changed';
 const hasAnalytics = Boolean(ga4MeasurementId && privacyDisclosureReady);
 const hasMarketing = Boolean(metaPixelId && privacyDisclosureReady);
-const hasConfiguredTracker = Boolean(ga4MeasurementId || metaPixelId);
 const hasOptionalTrackers = hasAnalytics || hasMarketing;
 let consentDecisionExists = false;
 
@@ -449,12 +448,14 @@ export function AnalyticsConsent() {
       }
 
       const campaign = getCampaignParameters();
+      const placement = link.dataset.affiliatePlacement ?? 'unknown';
 
       if (consent.analytics && window.gtag) {
         window.gtag('event', 'affiliate_outbound_click', {
           link_url: mercadolivreAffiliateUrl,
           link_domain: 'meli.la',
           outbound: true,
+          cta_position: placement,
           ...getGaCampaignParameters(campaign),
         });
       }
@@ -463,6 +464,7 @@ export function AnalyticsConsent() {
         window.fbq('trackCustom', 'AffiliateOutboundClick', {
           destination: 'Mercado Livre',
           content_ids: ['20298044'],
+          cta_position: placement,
           ...campaign,
         });
       }
@@ -545,29 +547,20 @@ export function AnalyticsConsent() {
           {preferencesOpen
             ? 'Preferências de cookies'
             : consent
-              ? 'Revise suas preferências de cookies'
-              : 'Escolha suas preferências de cookies'}
+              ? 'Revise suas preferências'
+              : 'Cookies e privacidade'}
         </h2>
         <p>
-          {hasConfiguredTracker && !privacyDisclosureReady
-            ? 'As integrações opcionais estão desativadas enquanto as informações de privacidade, retenção e transferências internacionais são revisadas. Nenhum rastreador será carregado.'
-            : hasOptionalTrackers
-              ? 'Analytics e marketing são opcionais. Você pode aceitar, rejeitar ou escolher cada categoria; a página e os links comerciais continuam disponíveis.'
-              : 'Nenhum ID opcional está configurado neste ambiente. Nenhum script de analytics ou marketing será carregado.'}
+          Análise e publicidade opcionais só funcionam com sua autorização.
+          Recusar não limita o acesso à oferta.
         </p>
         {!preferencesOpen && consent ? (
           <p className="privacy-consent-previous-choice">
-            Sua escolha anterior: Analytics{' '}
-            {consent.analytics ? 'autorizado' : 'não autorizado'}; Marketing{' '}
-            {consent.marketing ? 'autorizado' : 'não autorizado'}. Em
-            Personalizar, você pode confirmar ou alterar essas opções.
+            Escolha anterior — Analytics:{' '}
+            {consent.analytics ? 'autorizado' : 'recusado'}; Marketing:{' '}
+            {consent.marketing ? 'autorizado' : 'recusado'}.
           </p>
         ) : null}
-        <p className="privacy-essential-note">
-          Essenciais: a página guarda sua escolha no armazenamento do navegador,
-          priorizando localStorage e usando sessionStorage se necessário. Isso
-          não é um cookie nem contém um identificador de visita.
-        </p>
       </div>
 
       {preferencesOpen ? (
@@ -585,11 +578,11 @@ export function AnalyticsConsent() {
             <span>
               <strong>Analytics</strong>
               <small>
-                Google Analytics 4 para visualizar visitas e cliques de saída.
+                Google Analytics 4 para medir visitas e cliques de saída.
                 {!ga4MeasurementId
-                  ? ' Indisponível: nenhum ID está configurado.'
+                  ? ' Indisponível até que a integração seja configurada.'
                   : !privacyDisclosureReady
-                    ? ' Indisponível enquanto os detalhes legais não forem confirmados.'
+                    ? ' Desativado até a revisão de privacidade ser concluída.'
                     : ''}
               </small>
             </span>
@@ -606,11 +599,11 @@ export function AnalyticsConsent() {
             <span>
               <strong>Marketing</strong>
               <small>
-                Meta Pixel para mensuração de campanhas e anúncios.
+                Meta Pixel para mensurar campanhas e anúncios.
                 {!metaPixelId
-                  ? ' Indisponível: nenhum ID está configurado.'
+                  ? ' Indisponível até que a integração seja configurada.'
                   : !privacyDisclosureReady
-                    ? ' Indisponível enquanto os detalhes legais não forem confirmados.'
+                    ? ' Desativado até a revisão de privacidade ser concluída.'
                     : ''}
               </small>
             </span>

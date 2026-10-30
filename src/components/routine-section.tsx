@@ -5,19 +5,14 @@ import { kitchenImage } from '@/lib/product-data';
 
 const routineSteps = [
   {
-    title: 'Do café ao jantar',
+    title: 'Volumes de 0,7 L a 2 L',
     description:
-      'Frigideira, panela, caçarola e fervedor acompanham preparos diferentes ao longo do dia.',
+      'Compare as capacidades com as porções que você costuma preparar; o conjunto é voltado a volumes compactos.',
   },
   {
-    title: 'Veja o preparo com facilidade',
+    title: 'Cuide do revestimento',
     description:
-      'As tampas de vidro da panela e da caçarola ajudam a acompanhar a receita enquanto cozinha.',
-  },
-  {
-    title: 'Escolha peças para a sua rotina',
-    description:
-      'O acabamento preto e as quatro capacidades formam um conjunto compacto para diferentes preparos.',
+      'Para o Starflon Max, a Tramontina recomenda fogo baixo ou médio e utensílios de silicone, nylon ou madeira.',
   },
 ];
 
@@ -47,12 +42,11 @@ export function RoutineSection() {
         <div className="routine-copy">
           <p className="eyebrow">MAIS DO QUE UTENSÍLIOS</p>
           <h2 className="section-title" id="routine-title">
-            A diferença está na rotina que você constrói.
+            Uma peça para cada etapa do preparo.
           </h2>
           <p className="section-lead">
-            O café que começa o dia. O almoço que precisa ficar pronto. A
-            receita feita com carinho. São essas situações que tornam a cozinha
-            tão importante.
+            Frigideira, panela, caçarola e fervedor atendem tarefas diferentes.
+            Confira os volumes e os cuidados antes de escolher.
           </p>
 
           <ul className="routine-list">
@@ -85,13 +79,13 @@ export function StatementBand() {
       <div aria-hidden="true" className="statement-ring statement-ring-one" />
       <div aria-hidden="true" className="statement-ring statement-ring-two" />
       <div className="statement-content page-shell">
-        <p>O melhor da cozinha não está nas panelas.</p>
+        <p>ESCOLHA COM MAIS CLAREZA</p>
         <h2>
-          Está nos momentos que você <span>cria com elas.</span>
+          Conheça as peças antes <span>de conferir a oferta.</span>
         </h2>
         <span className="statement-rule" />
         <p className="statement-caption">
-          COZINHA É UMA ESCOLHA QUE FAZ PARTE DE TODOS OS DIAS.
+          COMPOSIÇÃO, CAPACIDADES E COMPATIBILIDADE EM UM SÓ LUGAR.
         </p>
       </div>
     </section>
@@ -103,21 +97,21 @@ const benefits = [
     number: '01',
     title: 'Revestimento Starflon Max',
     description:
-      'O revestimento antiaderente interno e externo ajuda a tornar o preparo e a limpeza mais práticos. Siga os cuidados do fabricante.',
+      'O antiaderente ajuda os alimentos a se soltarem e pode facilitar a limpeza quando usado conforme as orientações da Tramontina.',
     icon: Sparkles,
   },
   {
     number: '02',
     title: 'Acompanhe o preparo',
     description:
-      'As tampas de vidro da panela e da caçarola permitem acompanhar o cozimento sem levantar a tampa.',
+      'As tampas de vidro da panela e da caçarola permitem observar o cozimento sem precisar levantá-las.',
     icon: Eye,
   },
   {
     number: '03',
-    title: 'Do começo ao fim da receita',
+    title: 'Quatro funções diferentes',
     description:
-      'Frigideira, panela, caçarola e fervedor atendem tarefas distintas, dos acompanhamentos aos líquidos quentes.',
+      'Frigideira, panela, caçarola e fervedor oferecem opções para preparos rápidos, cozidos e bebidas quentes.',
     icon: CookingPot,
   },
 ];
@@ -133,11 +127,11 @@ export function BenefitsSection() {
         <div className="section-heading centered-heading">
           <p className="eyebrow">DETALHES QUE VOCÊ SENTE NA ROTINA</p>
           <h2 className="section-title" id="benefits-title">
-            Bonitas por fora. Pensadas para o dia a dia.
+            Detalhes que ajudam no preparo e na limpeza.
           </h2>
           <p className="section-lead">
-            Sem promessas mágicas: características concretas que podem fazer
-            diferença na sua experiência na cozinha.
+            Veja como o revestimento, as tampas e as funções das peças podem ser
+            úteis em receitas cotidianas.
           </p>
         </div>
 

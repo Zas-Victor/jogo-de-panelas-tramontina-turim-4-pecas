@@ -55,6 +55,7 @@ export function SiteHeader() {
           <AffiliateCta
             ariaLabel="Conferir preço no Mercado Livre"
             className="header-cta"
+            placement="header"
           >
             Conferir preço no Mercado Livre
           </AffiliateCta>
