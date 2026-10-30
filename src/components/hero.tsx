@@ -51,6 +51,10 @@ export function Hero() {
               Descobrir benefícios
               <ArrowDown aria-hidden="true" size={16} />
             </Link>
+            <Link className="button-secondary" href="#depoimentos">
+              Avaliações de compradores
+              <ArrowDown aria-hidden="true" size={16} />
+            </Link>
           </div>
 
           <p className="hero-disclosure">
