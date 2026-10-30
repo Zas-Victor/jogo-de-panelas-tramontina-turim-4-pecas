@@ -24,6 +24,14 @@ Os IDs opcionais são `NEXT_PUBLIC_GA_MEASUREMENT_ID` e `NEXT_PUBLIC_META_PIXEL_
 
 Todas as CTAs comerciais levam ao link fixo `https://meli.la/1REfxSi`, sem alteração de parâmetros.
 
-## Deploy na Vercel
+## Deploy na Netlify
 
-Importe o repositório conectado ao GitHub e mantenha o preset Next.js e os comandos detectados pela Vercel (`pnpm install` / `pnpm build`). Configure `NEXT_PUBLIC_SITE_URL` após definir o domínio de produção; adicione IDs e dados de privacidade somente quando confirmados. O site e suas rotas são gerados sem serviços de backend.
+O projeto tramontina-turim publica a branch main do GitHub. Pushes nessa branch geram deploys de produção; pull requests geram previews. O adaptador oficial Next.js da Netlify é detectado durante pnpm build. O netlify.toml define a URL canônica e as opções de instalação pnpm.
+
+Configure NEXT_PUBLIC_GA_MEASUREMENT_ID ou NEXT_PUBLIC_META_PIXEL_ID somente após a revisão de privacidade e consentimento. Sem esses IDs, os rastreadores permanecem desativados.
+
+Para ativar o domínio personalizado, configure no DNS apenas CNAME panelas-turim → tramontina-turim.netlify.app; não altere nameservers nem outros registros. O certificado HTTPS é emitido após a validação do DNS.
+
+## Vercel durante a migração
+
+O deploy da Vercel permanece como contingência até que o domínio personalizado e o HTTPS da Netlify estejam validados.
