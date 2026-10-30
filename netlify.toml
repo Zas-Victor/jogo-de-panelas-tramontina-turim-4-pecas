@@ -1,0 +1,6 @@
+[build]
+  command = "pnpm build"
+
+[build.environment]
+  NEXT_PUBLIC_SITE_URL = "https://panelas-turim.kynovra.digital"
+  PNPM_FLAGS = "--shamefully-hoist"

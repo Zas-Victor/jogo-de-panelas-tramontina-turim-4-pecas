@@ -240,9 +240,7 @@ export default function PrivacyPage() {
             precisam ser documentados. Enquanto essa revisão não for concluída,
             analytics e Meta Pixel permanecem desativados.
           </p>
-          {privacyTransferSummary ? (
-            <p>{privacyTransferSummary}</p>
-          ) : null}
+          {privacyTransferSummary ? <p>{privacyTransferSummary}</p> : null}
           <p>
             <ExternalLink href="https://www.gov.br/anpd/pt-br/acesso-a-informacao/institucional/atos-normativos/regulamentacoes_anpd/resolucao-cd-anpd-no-19-de-23-de-agosto-de-2024">
               Regulamento de Transferência Internacional de Dados da ANPD
@@ -259,9 +257,7 @@ export default function PrivacyPage() {
             expiração automática; você pode removê-lo ao revogar a escolha ou
             limpar os dados do site no navegador.
           </p>
-          {privacyRetentionSummary ? (
-            <p>{privacyRetentionSummary}</p>
-          ) : null}
+          {privacyRetentionSummary ? <p>{privacyRetentionSummary}</p> : null}
           {privacyTechnicalLogsSummary ? (
             <p>{privacyTechnicalLogsSummary}</p>
           ) : null}
@@ -317,7 +313,6 @@ export default function PrivacyPage() {
           </p>
           <p>Última atualização: 29 de outubro de 2026.</p>
         </section>
-
       </main>
       <SiteFooter />
     </>
