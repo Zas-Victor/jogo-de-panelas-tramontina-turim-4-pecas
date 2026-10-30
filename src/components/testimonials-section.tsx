@@ -42,7 +42,6 @@ export function TestimonialsSection() {
                 ))}
               </div>
 
-              <h3>{`Avaliação ${testimonial.number}`}</h3>
               <blockquote>{testimonial.text}</blockquote>
 
               <TestimonialGallery

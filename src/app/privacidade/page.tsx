@@ -4,6 +4,7 @@ import { SiteFooter } from '@/components/site-footer';
 import {
   ga4MeasurementId,
   metaPixelId,
+  optionalTrackingAvailable,
   privacyContactLabel,
   privacyContactUrl,
   privacyControllerName,
@@ -89,13 +90,15 @@ export default function PrivacyPage() {
             2. Dados tratados, finalidades e bases legais
           </h2>
           <ul>
-            <li>
-              <strong>Preferência de cookies:</strong> a escolha entre Analytics
-              e Marketing fica no armazenamento local do navegador, sem
-              identificador de visita. Serve para guardar e respeitar a escolha.
-              A definição da base legal específica para este registro mínimo
-              está pendente de revisão.
-            </li>
+            {optionalTrackingAvailable ? (
+              <li>
+                <strong>Preferência de cookies:</strong> a escolha entre
+                Analytics e Marketing fica no armazenamento local do navegador,
+                sem identificador de visita. Serve para guardar e respeitar a
+                escolha. A definição da base legal específica para este registro
+                mínimo está pendente de revisão.
+              </li>
+            ) : null}
             <li>
               <strong>Dados técnicos de acesso:</strong> a Netlify recebe a
               requisição HTTP necessária para entregar e proteger o site. A URL
@@ -111,11 +114,10 @@ export default function PrivacyPage() {
               para a categoria escolhida.
             </li>
             <li>
-              <strong>Eventos opcionais:</strong> com consentimento, o Google
-              Analytics 4 pode receber visualizações de página e do produto e
-              cliques de saída; o Meta Pixel pode receber visualizações e
-              cliques de saída. A base legal é o consentimento, que pode ser
-              revogado. Nenhum evento de compra é enviado.
+              <strong>Eventos opcionais:</strong>{' '}
+              {optionalTrackingAvailable
+                ? 'as integrações liberadas podem receber visualizações de página e do produto e cliques de saída somente após a escolha da categoria correspondente. A base legal indicada para esses eventos é o consentimento, que pode ser revogado. Nenhum evento de compra é enviado.'
+                : 'não há IDs de Google Analytics 4 ou Meta Pixel configurados neste ambiente; por isso, nenhum evento de analytics ou publicidade é enviado pela landing page. Se forem habilitadas após a revisão, só poderão receber eventos após consentimento correspondente.'}
             </li>
             <li>
               <strong>Navegação para o Mercado Livre:</strong> ao ativar um link
@@ -149,9 +151,11 @@ export default function PrivacyPage() {
             retenção. Não atribuímos prazos ou práticas não verificados.
           </p>
           <p>
-            {hasConfiguredTracker
-              ? 'Há um ou mais IDs de integração configurados neste ambiente. Os scripts continuam bloqueados até que as informações legais e técnicas sejam confirmadas e você autorize a categoria correspondente.'
-              : 'Nenhum ID de Google Analytics 4 ou Meta Pixel está configurado neste ambiente; por isso, esses scripts não são carregados.'}{' '}
+            {optionalTrackingAvailable
+              ? 'Há integrações opcionais liberadas neste ambiente; seus scripts só são carregados após o consentimento da categoria correspondente.'
+              : hasConfiguredTracker
+                ? 'Há um ou mais IDs configurados, mas os scripts continuam bloqueados até que as informações legais e técnicas sejam confirmadas.'
+                : 'Nenhum ID de Google Analytics 4 ou Meta Pixel está configurado neste ambiente; por isso, esses scripts não são carregados.'}{' '}
             Quando habilitados após revisão, Analytics e Marketing são
             independentes e opcionais. Consulte a{' '}
             <Link href="/cookies">Política de Cookies</Link>.
@@ -160,25 +164,34 @@ export default function PrivacyPage() {
 
         <section aria-labelledby="privacy-cookies">
           <h2 id="privacy-cookies">4. Cookies e armazenamento local</h2>
-          <p>
-            A preferência é salva prioritariamente no armazenamento local
-            (localStorage). Se ele estiver indisponível, a página tenta usar
-            sessionStorage para manter a escolha durante a sessão daquela aba. O
-            registro contém a versão da preferência e as escolhas de Analytics e
-            Marketing, sem ID de visita ou data. O localStorage não tem
-            expiração automática; o sessionStorage dura enquanto a sessão da aba
-            permanecer aberta.
-          </p>
+          {optionalTrackingAvailable ? (
+            <p>
+              A preferência é salva prioritariamente no armazenamento local
+              (localStorage). Se ele estiver indisponível, a página tenta usar
+              sessionStorage para manter a escolha durante a sessão daquela aba.
+              O registro contém a versão e as escolhas de Analytics e Marketing,
+              sem ID de visita ou data. O localStorage não tem expiração
+              automática; o sessionStorage dura enquanto a sessão da aba
+              permanecer aberta.
+            </p>
+          ) : (
+            <p>
+              Neste ambiente, não há painel de consentimento nem preferência de
+              Analytics ou Marketing armazenada, porque não há rastreadores
+              opcionais liberados. Uma preferência antiga eventualmente
+              encontrada no navegador é removida ao carregar esta versão.
+            </p>
+          )}
           <p>
             Google Analytics 4 e Meta Pixel podem usar cookies ou
-            identificadores de navegador quando configurados e autorizados. Os
-            nomes e prazos efetivos dependem das configurações dos serviços e
-            ainda não foram verificados nesta instalação. Não declaramos
-            períodos não confirmados. Consulte a{' '}
-            <Link href="/cookies">Política de Cookies</Link>. Depois da primeira
-            decisão, o botão “Alterar consentimento” no rodapé permite revisar
-            ou revogar as escolhas; a janela também reaparece em uma nova
-            sessão.
+            identificadores de navegador somente se configurados e, quando
+            aplicável, autorizados. Os nomes e prazos efetivos dependem das
+            configurações dos serviços e não foram verificados nesta instalação.
+            Não declaramos períodos não confirmados. Consulte a{' '}
+            <Link href="/cookies">Política de Cookies</Link>.
+            {optionalTrackingAvailable
+              ? ' O botão “Alterar consentimento” no rodapé permite revisar ou revogar as escolhas; a janela reaparece em uma nova sessão.'
+              : null}
           </p>
         </section>
 
@@ -241,10 +254,12 @@ export default function PrivacyPage() {
             Já foi identificado que a operação envolve transferências
             internacionais relacionadas aos serviços utilizados. Os países de
             destino, os dados envolvidos, os papéis dos fornecedores e os
-            mecanismos aplicáveis ainda precisam ser documentados. Analytics e
-            Meta Pixel permanecem desativados enquanto essa revisão estiver
-            pendente; hospedagem e navegação para serviços externos continuam
-            sujeitas às práticas dos respectivos fornecedores.
+            mecanismos aplicáveis ainda precisam ser documentados. Neste
+            ambiente, Analytics e Meta Pixel não têm IDs configurados e não são
+            carregados; hospedagem e navegação para serviços externos continuam
+            sujeitas às práticas dos respectivos fornecedores. Qualquer futura
+            ativação de rastreamento também depende da revisão e do
+            consentimento correspondente.
           </p>
           {privacyTransferSummary ? <p>{privacyTransferSummary}</p> : null}
           <p>
@@ -259,9 +274,12 @@ export default function PrivacyPage() {
           <p>
             Mantemos dados pelo menor prazo necessário a cada finalidade, mas os
             períodos específicos ainda precisam ser verificados por tipo de dado
-            e fornecedor. O registro da preferência no navegador não tem
-            expiração automática; ao alterar ou revogar a escolha, o registro é
-            atualizado. Você também pode apagar os dados do site no navegador.
+            e fornecedor.{' '}
+            {optionalTrackingAvailable
+              ? 'A preferência no navegador não tem expiração automática; ao alterar ou revogar a escolha, o registro é atualizado.'
+              : 'Não há preferência de rastreamento armazenada por esta versão da página.'}{' '}
+            Você também pode apagar os dados do site nas configurações do
+            navegador.
           </p>
           {privacyRetentionSummary ? <p>{privacyRetentionSummary}</p> : null}
           {privacyTechnicalLogsSummary ? (

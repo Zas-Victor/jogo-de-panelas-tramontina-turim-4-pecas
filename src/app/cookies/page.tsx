@@ -2,16 +2,20 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { SiteFooter } from '@/components/site-footer';
 import {
+  analyticsTrackingAvailable,
   ga4MeasurementId,
+  marketingTrackingAvailable,
   metaPixelId,
+  optionalTrackingAvailable,
   privacyDisclosureReady,
 } from '@/lib/site-config';
 import { siteOrigin } from '@/lib/site-origin';
 
 export const metadata: Metadata = {
   title: 'Política de Cookies | Kynovra Deals',
-  description:
-    'Entenda quando aparece a janela de consentimento e como as escolhas de cookies controlam Analytics e Marketing na Kynovra Deals.',
+  description: optionalTrackingAvailable
+    ? 'Entenda como as escolhas de consentimento controlam Analytics e Marketing na Kynovra Deals.'
+    : 'Conheça o armazenamento e as tecnologias de rastreamento da Kynovra Deals. Atualmente, Analytics e Marketing não estão habilitados.',
   alternates: siteOrigin
     ? { canonical: new URL('/cookies', siteOrigin) }
     : undefined,
@@ -45,34 +49,27 @@ export default function CookiesPage() {
         <section aria-labelledby="cookies-essential">
           <h2 id="cookies-essential">1. Essenciais e preferência</h2>
           <p>
-            A página salva as opções de Analytics e Marketing no localStorage,
-            na chave <code>kynovra-privacy-consent-v2</code>. Se o localStorage
-            estiver indisponível, tenta usar sessionStorage na mesma chave. O
-            registro contém apenas as escolhas e a versão da preferência, sem ID
-            de visita ou data adicional.
+            Não identificamos cookies próprios indispensáveis no código da
+            landing page. O armazenamento local de preferências só é usado
+            quando há uma integração opcional liberada e o painel de
+            consentimento está ativo; essa preferência não é um cookie.
           </p>
-          <p>
-            Esses mecanismos de armazenamento não são cookies. Não há, no código
-            da landing page, outro cookie essencial identificado. A escolha
-            salva no localStorage não expira automaticamente; a cópia em
-            sessionStorage vale durante a sessão daquela aba. Um marcador
-            separado em sessionStorage registra que você já decidiu durante a
-            sessão atual, para a janela não reaparecer em cada navegação
-            interna.
-          </p>
-          <p>
-            Se o localStorage estiver indisponível, a página tenta manter a
-            escolha em sessionStorage durante a sessão da aba. Se ambos forem
-            bloqueados, a preferência não poderá ser persistida e as integrações
-            opcionais não serão carregadas; o acesso ao conteúdo e aos links
-            comerciais continua disponível.
-          </p>
-          <p>
-            A janela aparece automaticamente no início de uma nova sessão. Se
-            houver uma escolha anterior salva, ela é apresentada novamente para
-            confirmação ou alteração. Na primeira visita, nenhuma categoria
-            opcional vem autorizada.
-          </p>
+          {optionalTrackingAvailable ? (
+            <p>
+              Nesse caso, a escolha é salva no localStorage, com fallback para
+              sessionStorage durante a sessão da aba. A janela aparece na nova
+              sessão e não em cada navegação interna; escolhas anteriores são
+              mostradas para confirmação ou alteração. Se os dois armazenamentos
+              forem bloqueados, os rastreadores opcionais permanecem desligados.
+            </p>
+          ) : (
+            <p>
+              Neste momento não há integrações opcionais liberadas, então não
+              mostramos um painel de consentimento nem guardamos escolhas de
+              Analytics ou Marketing. Se restar uma preferência de uma versão
+              anterior, ela é removida ao carregar a página.
+            </p>
+          )}
         </section>
 
         <section aria-labelledby="cookies-analytics">
@@ -88,6 +85,11 @@ export default function CookiesPage() {
           </p>
           {!ga4MeasurementId ? (
             <p>Neste ambiente, não há ID de Google Analytics 4 configurado.</p>
+          ) : !analyticsTrackingAvailable ? (
+            <p>
+              Há um ID configurado, mas a integração permanece desativada até a
+              revisão das informações de privacidade.
+            </p>
           ) : null}
         </section>
 
@@ -104,40 +106,45 @@ export default function CookiesPage() {
           </p>
           {!metaPixelId ? (
             <p>Neste ambiente, não há ID de Meta Pixel configurado.</p>
+          ) : !marketingTrackingAvailable ? (
+            <p>
+              Há um ID configurado, mas a integração permanece desativada até a
+              revisão das informações de privacidade.
+            </p>
           ) : null}
         </section>
 
         <section aria-labelledby="cookies-status">
           <h2 id="cookies-status">4. Estado atual e retenção</h2>
           <p>
-            {hasConfiguredTracker
-              ? 'Há integração configurada neste ambiente, mas ela permanece bloqueada até que as informações de privacidade sejam confirmadas e você autorize a categoria correspondente.'
-              : 'Não há IDs de Analytics ou Marketing configurados neste ambiente; portanto, esses scripts opcionais não são carregados.'}{' '}
+            {optionalTrackingAvailable
+              ? 'Há integração opcional liberada neste ambiente. Ela só carrega depois da autorização específica; Analytics e Marketing são escolhas independentes.'
+              : hasConfiguredTracker
+                ? 'Há ID(s) configurado(s), mas as integrações seguem desativadas enquanto a revisão de privacidade estiver pendente.'
+                : 'Não há IDs de Analytics ou Marketing configurados neste ambiente; esses scripts não são carregados e o painel de consentimento não é exibido.'}{' '}
             Não são informados prazos de cookies de terceiros sem validação da
             configuração real. Consulte também o{' '}
             <Link href="/privacidade">Aviso de Privacidade</Link>.
           </p>
-          <p>
-            Quando você revoga uma categoria, a página pede ao Google que negue
-            o armazenamento de Analytics, envia ao Meta a instrução de revogação
-            se o Pixel tiver sido carregado e tenta remover identificadores
-            próprios conhecidos desses serviços. Cookies de terceiros fora do
-            domínio da página não podem ser apagados por ela; se necessário,
-            remova-os também nas configurações do navegador.
-          </p>
+          {optionalTrackingAvailable ? (
+            <p>
+              Ao revogar uma categoria, a página interrompe novos eventos,
+              atualiza o estado de consentimento do fornecedor quando o script
+              já foi carregado e tenta remover identificadores próprios
+              conhecidos. Não consegue apagar cookies definidos em outros
+              domínios; eles podem ser removidos nas configurações do navegador.
+            </p>
+          ) : null}
         </section>
 
         <section aria-labelledby="cookies-manage">
           <h2 id="cookies-manage">5. Como alterar ou apagar preferências</h2>
           <p>
-            Na janela inicial, escolha Aceitar opcionais, Rejeitar opcionais ou
-            Personalizar. Em Personalizar, Analytics e Marketing têm controles
-            independentes; sem consentimento anterior, ambos começam
-            desativados. Depois da primeira decisão, o botão discreto “Alterar
-            consentimento” aparece no rodapé e permite revogar ou modificar a
-            escolha a qualquer momento. Ao iniciar uma nova sessão, a janela
-            reaparece e mostra as opções salvas anteriormente. Você também pode
-            limpar os dados do site nas configurações do navegador.
+            {optionalTrackingAvailable
+              ? 'Na janela inicial, escolha Aceitar opcionais, Rejeitar opcionais ou Personalizar. Analytics e Marketing têm controles independentes e começam desativados. Após decidir, o botão “Alterar consentimento” aparece no rodapé; a janela volta em uma nova sessão com a escolha anterior para confirmação ou alteração.'
+              : 'Como não há rastreadores opcionais liberados neste ambiente, não há painel nem preferências para alterar. Se uma integração for habilitada após a revisão de privacidade, o painel será apresentado antes de qualquer rastreamento opcional.'}{' '}
+            O conteúdo e os links comerciais permanecem acessíveis em qualquer
+            configuração.
           </p>
         </section>
 

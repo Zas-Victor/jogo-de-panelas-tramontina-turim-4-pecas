@@ -6,6 +6,7 @@ import { brandLogo } from '@/lib/product-data';
 const navigation = [
   { href: '#beneficios', label: 'Benefícios' },
   { href: '#itens', label: 'O que vem no kit' },
+  { href: '#depoimentos', label: 'Avaliações' },
   { href: '#antes-de-comprar', label: 'Antes de comprar' },
   { href: '#duvidas', label: 'Dúvidas' },
 ];
@@ -16,7 +17,7 @@ export function SiteHeader() {
       <div className="notice-bar">
         <span>PUBLICIDADE</span>
         <span aria-hidden="true">·</span>
-        <span>RECOMENDAÇÃO INDEPENDENTE</span>
+        <span>LINKS DE AFILIADO</span>
       </div>
 
       <header className="site-header">

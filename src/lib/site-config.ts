@@ -57,3 +57,12 @@ export const privacyDisclosureReady = Boolean(
     privacyTechnicalLogsSummary &&
     privacyNoticeApproved,
 );
+
+export const analyticsTrackingAvailable = Boolean(
+  ga4MeasurementId && privacyDisclosureReady,
+);
+export const marketingTrackingAvailable = Boolean(
+  metaPixelId && privacyDisclosureReady,
+);
+export const optionalTrackingAvailable =
+  analyticsTrackingAvailable || marketingTrackingAvailable;

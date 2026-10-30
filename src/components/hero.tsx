@@ -21,8 +21,9 @@ export function Hero() {
               alt=""
               aria-hidden="true"
               className="hero-meta-product-image"
+              fetchPriority="high"
               height={64}
-              loading="lazy"
+              loading="eager"
               sizes="64px"
               src={heroProductImage}
               width={64}

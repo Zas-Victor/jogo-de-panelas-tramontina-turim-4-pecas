@@ -7,6 +7,7 @@ import {
   ga4MeasurementId,
   mercadolivreAffiliateUrl,
   metaPixelId,
+  optionalTrackingAvailable,
   privacyDisclosureReady,
 } from '@/lib/site-config';
 
@@ -16,7 +17,7 @@ const openConsentEvent = 'kynovra:open-consent-settings';
 const consentDecisionChangedEvent = 'kynovra:consent-decision-changed';
 const hasAnalytics = Boolean(ga4MeasurementId && privacyDisclosureReady);
 const hasMarketing = Boolean(metaPixelId && privacyDisclosureReady);
-const hasOptionalTrackers = hasAnalytics || hasMarketing;
+const hasOptionalTrackers = optionalTrackingAvailable;
 let consentDecisionExists = false;
 
 type ConsentChoice = {
@@ -295,7 +296,34 @@ export function AnalyticsConsent() {
   );
 
   useEffect(() => {
-    const storedConsent = readStoredConsent();
+    if (!hasOptionalTrackers) {
+      try {
+        window.localStorage.removeItem(consentStorageKey);
+        window.localStorage.removeItem(consentSessionChoiceKey);
+      } catch {
+        // Local storage may be unavailable or blocked by browser settings.
+      }
+      try {
+        window.sessionStorage.removeItem(consentStorageKey);
+        window.sessionStorage.removeItem(consentSessionChoiceKey);
+      } catch {
+        // Session storage may be unavailable or blocked by browser settings.
+      }
+
+      publishConsentDecision(false);
+      setConsent(null);
+      setInitialPromptOpen(false);
+      setHydrated(true);
+      return;
+    }
+
+    const storedValue = readStoredConsent();
+    const storedConsent = storedValue
+      ? {
+          analytics: storedValue.analytics && hasAnalytics,
+          marketing: storedValue.marketing && hasMarketing,
+        }
+      : null;
     setConsent(storedConsent);
     publishConsentDecision(storedConsent !== null);
     setInitialPromptOpen(!hasDecisionInCurrentSession());
@@ -303,6 +331,10 @@ export function AnalyticsConsent() {
   }, []);
 
   useEffect(() => {
+    if (!hasOptionalTrackers) {
+      return;
+    }
+
     const handleOpenPreferences = (event: Event) => {
       const trigger =
         event instanceof CustomEvent && event.detail instanceof HTMLElement
@@ -566,48 +598,38 @@ export function AnalyticsConsent() {
       {preferencesOpen ? (
         <fieldset className="privacy-options">
           <legend>Escolha as categorias opcionais:</legend>
-          <label>
-            <input
-              checked={analyticsDraft}
-              disabled={!hasAnalytics}
-              onChange={(event) =>
-                setAnalyticsDraft(event.currentTarget.checked)
-              }
-              type="checkbox"
-            />
-            <span>
-              <strong>Analytics</strong>
-              <small>
-                Google Analytics 4 para medir visitas e cliques de saída.
-                {!ga4MeasurementId
-                  ? ' Indisponível até que a integração seja configurada.'
-                  : !privacyDisclosureReady
-                    ? ' Desativado até a revisão de privacidade ser concluída.'
-                    : ''}
-              </small>
-            </span>
-          </label>
-          <label>
-            <input
-              checked={marketingDraft}
-              disabled={!hasMarketing}
-              onChange={(event) =>
-                setMarketingDraft(event.currentTarget.checked)
-              }
-              type="checkbox"
-            />
-            <span>
-              <strong>Marketing</strong>
-              <small>
-                Meta Pixel para mensurar campanhas e anúncios.
-                {!metaPixelId
-                  ? ' Indisponível até que a integração seja configurada.'
-                  : !privacyDisclosureReady
-                    ? ' Desativado até a revisão de privacidade ser concluída.'
-                    : ''}
-              </small>
-            </span>
-          </label>
+          {hasAnalytics ? (
+            <label>
+              <input
+                checked={analyticsDraft}
+                onChange={(event) =>
+                  setAnalyticsDraft(event.currentTarget.checked)
+                }
+                type="checkbox"
+              />
+              <span>
+                <strong>Analytics</strong>
+                <small>
+                  Google Analytics 4 para medir visitas e cliques de saída.
+                </small>
+              </span>
+            </label>
+          ) : null}
+          {hasMarketing ? (
+            <label>
+              <input
+                checked={marketingDraft}
+                onChange={(event) =>
+                  setMarketingDraft(event.currentTarget.checked)
+                }
+                type="checkbox"
+              />
+              <span>
+                <strong>Marketing</strong>
+                <small>Meta Pixel para mensurar campanhas e anúncios.</small>
+              </span>
+            </label>
+          ) : null}
         </fieldset>
       ) : null}
 
@@ -678,6 +700,11 @@ export function ConsentChangeButton() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
+    if (!hasOptionalTrackers) {
+      setVisible(false);
+      return;
+    }
+
     const handleConsentDecisionChange = (event?: Event) => {
       if (event instanceof CustomEvent && typeof event.detail === 'boolean') {
         setVisible(event.detail);
@@ -698,7 +725,7 @@ export function ConsentChangeButton() {
       );
   }, []);
 
-  if (!visible) {
+  if (!hasOptionalTrackers || !visible) {
     return null;
   }
 

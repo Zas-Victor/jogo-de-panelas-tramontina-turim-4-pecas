@@ -19,9 +19,10 @@ export function ProductSection() {
             </h2>
           </div>
           <p className="product-intro">
-            Conheça o jogo de panelas preto Tramontina Turim, referência{' '}
-            <strong>20298044</strong>, e confira a composição do anúncio antes
-            de escolher.
+            São quatro peças compactas, com capacidades de 0,7 L a 2 L. Compare
+            cada medida com o que costuma preparar. Este é o jogo preto
+            Tramontina Turim, referência <strong>20298044</strong>; confira a
+            composição no anúncio antes de escolher.
           </p>
         </div>
 
