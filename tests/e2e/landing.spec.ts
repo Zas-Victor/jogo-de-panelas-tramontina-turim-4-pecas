@@ -3,6 +3,7 @@ import { expect, test } from '@playwright/test';
 const viewports = [
   { width: 320, height: 740 },
   { width: 375, height: 812 },
+  { width: 390, height: 812 },
   { width: 768, height: 1024 },
   { width: 1024, height: 900 },
   { width: 1440, height: 960 },
@@ -84,6 +85,59 @@ test('renders the landing page without horizontal overflow', async ({
       await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
       await expect(stickyCta).toHaveCSS('visibility', 'visible');
     }
+  }
+});
+
+test('privacy and cookies pages remain responsive at target widths', async ({
+  page,
+}) => {
+  for (const viewport of viewports) {
+    await page.setViewportSize(viewport);
+
+    for (const route of ['/privacidade', '/cookies']) {
+      await page.goto(route);
+      await expect(page.locator('main h1')).toBeVisible();
+
+      const documentWidth = await page.evaluate(
+        () => document.documentElement.scrollWidth,
+      );
+      expect(documentWidth).toBeLessThanOrEqual(viewport.width);
+    }
+  }
+});
+
+test('cookie preferences fit narrow screens and restore keyboard focus', async ({
+  page,
+}) => {
+  for (const width of [320, 375, 390]) {
+    await page.setViewportSize({ width, height: 812 });
+    await page.goto('/');
+
+    const trigger = consentTestEnabled
+      ? page.getByRole('button', { name: 'Personalizar', exact: true })
+      : page.getByRole('button', { name: 'Preferências de cookies' }).last();
+    if (!consentTestEnabled) {
+      await expect
+        .poll(() =>
+          page.evaluate(
+            () => document.documentElement.dataset.cookieConsentSettingsReady,
+          ),
+        )
+        .toBe('true');
+    }
+    await expect(trigger).toBeVisible();
+    await trigger.click();
+    await expect(
+      page.getByRole('heading', { name: 'Preferências de cookies' }),
+    ).toBeFocused();
+
+    const documentWidth = await page.evaluate(
+      () => document.documentElement.scrollWidth,
+    );
+    expect(documentWidth).toBeLessThanOrEqual(width);
+
+    await page.keyboard.press('Escape');
+    await expect(trigger).toBeFocused();
   }
 });
 
@@ -210,19 +264,16 @@ test('affiliate actions use the official short URL unchanged', async ({
   );
 });
 
-test('metadata, canonical, sitemap, and robots resolve for the Vercel origin', async ({
+test('metadata, canonical, sitemap, and robots resolve for the Netlify origin', async ({
   page,
   request,
 }) => {
-  test.skip(
-    !process.env.VERCEL_PROJECT_PRODUCTION_URL &&
-      !process.env.NEXT_PUBLIC_SITE_URL,
-  );
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  test.skip(!siteUrl);
+  if (!siteUrl) return;
 
   await page.goto('/');
-  const expectedOrigin = process.env.NEXT_PUBLIC_SITE_URL
-    ? new URL(process.env.NEXT_PUBLIC_SITE_URL).origin
-    : `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
+  const expectedOrigin = new URL(siteUrl).origin;
 
   await expect(page).toHaveTitle(/Tramontina Turim 4 Peças Preto/);
   await expect(page.locator('meta[name="description"]')).toHaveAttribute(
@@ -284,8 +335,10 @@ test('privacy and cookies routes are reachable and the settings panel is keyboar
   ).toBeVisible();
 
   await expect(page.getByText('Documento preliminar')).toHaveCount(0);
+  await expect(page.getByText(/Controlador:/)).toBeVisible();
+  await expect(page.getByText(/Vercel/)).toHaveCount(0);
   await expect(
-    page.getByText(/nome civil pendente de confirmação/),
+    page.getByRole('link', { name: 'Aviso de privacidade da Netlify' }),
   ).toBeVisible();
   await page
     .getByRole('button', { name: 'Preferências de cookies' })
@@ -336,10 +389,54 @@ test('cookie preferences remain available without tracker IDs and keep scripts u
   expect(storedChoice).toContain('"marketing":false');
 });
 
+test('consent falls back to session storage when localStorage is unavailable', async ({
+  page,
+}) => {
+  test.skip(!consentTestEnabled);
+
+  await page.addInitScript(() => {
+    const originalSetItem = Storage.prototype.setItem;
+    Storage.prototype.setItem = function (key, value) {
+      if (
+        this === window.localStorage &&
+        key === 'kynovra-privacy-consent-v2'
+      ) {
+        throw new DOMException('Storage blocked', 'SecurityError');
+      }
+      return originalSetItem.call(this, key, value);
+    };
+  });
+
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Rejeitar opcionais' }).click();
+
+  const storedChoice = await page.evaluate(() =>
+    sessionStorage.getItem('kynovra-privacy-consent-v2'),
+  );
+  expect(storedChoice).toContain('"analytics":false');
+  expect(storedChoice).toContain('"marketing":false');
+
+  await page.reload();
+  await expect(
+    page.getByRole('button', { name: 'Rejeitar opcionais' }),
+  ).toHaveCount(0);
+  await expect(page.locator('#kynovra-ga4-script')).toHaveCount(0);
+  await expect(page.locator('#kynovra-meta-pixel-script')).toHaveCount(0);
+});
+
 test('consent rejection keeps both optional trackers unloaded', async ({
   page,
 }) => {
   test.skip(!analyticsTestEnabled || !marketingTestEnabled);
+  const trackerRequests: string[] = [];
+  page.on('request', (request) => {
+    if (
+      request.url().startsWith('https://www.googletagmanager.com/') ||
+      request.url().startsWith('https://connect.facebook.net/')
+    ) {
+      trackerRequests.push(request.url());
+    }
+  });
   await page.route('https://www.googletagmanager.com/**', (route) =>
     route.abort(),
   );
@@ -351,6 +448,7 @@ test('consent rejection keeps both optional trackers unloaded', async ({
   ).toBeVisible();
   await expect(page.locator('#kynovra-ga4-script')).toHaveCount(0);
   await expect(page.locator('#kynovra-meta-pixel-script')).toHaveCount(0);
+  expect(trackerRequests).toEqual([]);
 
   await page.getByRole('button', { name: 'Rejeitar opcionais' }).click();
   await expect(page.locator('#kynovra-ga4-script')).toHaveCount(0);

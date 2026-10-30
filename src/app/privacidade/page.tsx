@@ -79,8 +79,9 @@ export default function PrivacyPage() {
           <p>
             <strong>Canal para privacidade:</strong>{' '}
             <a href={privacyContactUrl}>{privacyContactLabel}</a>. As
-            solicitações são recebidas por e-mail e tratadas manualmente pelo
-            responsável.
+            solicitações podem ser enviadas por e-mail e são tratadas
+            manualmente pelo responsável. O recebimento deste endereço ainda
+            está pendente de teste.
           </p>
         </section>
 
@@ -97,12 +98,11 @@ export default function PrivacyPage() {
               está pendente de revisão.
             </li>
             <li>
-              <strong>Dados técnicos de acesso:</strong> a hospedagem pode
-              processar dados da requisição para entregar e proteger o site. A
-              lista exata de campos, os prazos e a base legal aplicável precisam
-              ser confirmados com a configuração da Vercel. A finalidade
-              prevista é operação e segurança, com análise de legítimo interesse
-              pendente.
+              <strong>Dados técnicos de acesso:</strong> a Netlify recebe a
+              requisição HTTP necessária para entregar e proteger o site. A URL
+              pode incluir parâmetros de campanha (UTMs). Ainda é preciso
+              confirmar quais campos são registrados nos logs, quem os acessa,
+              por quanto tempo são mantidos e qual base legal se aplica.
             </li>
             <li>
               <strong>Parâmetros de campanha (UTMs):</strong> quando presentes
@@ -143,11 +143,11 @@ export default function PrivacyPage() {
         <section aria-labelledby="privacy-logs">
           <h2 id="privacy-logs">3. Logs técnicos e ferramentas de análise</h2>
           <p>
-            A infraestrutura que entrega a página pode gerar registros técnicos
-            de requisições. Os campos exatos, o acesso a esses registros, sua
-            finalidade operacional e os períodos de retenção ainda estão em
-            verificação. Não atribuímos a esses logs um prazo que não foi
-            confirmado.
+            A Netlify hospeda e entrega a página e pode gerar registros técnicos
+            de requisições. A URL recebida pelo serviço pode conter UTMs; ainda
+            não confirmamos quais campos são efetivamente mantidos em logs, quem
+            pode acessá-los, sua finalidade detalhada nem os períodos de
+            retenção. Não atribuímos prazos ou práticas não verificados.
           </p>
           <p>
             {hasConfiguredTracker
@@ -162,11 +162,13 @@ export default function PrivacyPage() {
         <section aria-labelledby="privacy-cookies">
           <h2 id="privacy-cookies">4. Cookies e armazenamento local</h2>
           <p>
-            O código da landing page não grava cookies próprios para lembrar a
-            preferência: registra apenas duas escolhas no armazenamento local do
-            navegador. Esse registro fica até ser apagado no navegador ou
-            substituído por uma nova versão da preferência; não há expiração
-            automática configurada.
+            A preferência é salva prioritariamente no armazenamento local
+            (localStorage). Se ele estiver indisponível, a página tenta usar
+            sessionStorage para manter a escolha durante a sessão daquela aba. O
+            registro contém a versão da preferência e as escolhas de Analytics e
+            Marketing, sem ID de visita ou data. O localStorage não tem
+            expiração automática; o sessionStorage dura enquanto a sessão da aba
+            permanecer aberta.
           </p>
           <p>
             Google Analytics 4 e Meta Pixel podem usar cookies ou
@@ -183,8 +185,9 @@ export default function PrivacyPage() {
           <h2 id="privacy-sharing">5. Compartilhamento com fornecedores</h2>
           <ul>
             <li>
-              <strong>Vercel:</strong> hospedagem e entrega da landing page;
-              registros técnicos dependem da configuração da plataforma.
+              <strong>Netlify:</strong> hospedagem e entrega da landing page;
+              pode processar requisições e gerar registros técnicos. Os campos,
+              acessos e prazos efetivos ainda precisam ser confirmados.
             </li>
             <li>
               <strong>Mercado Livre:</strong> recebe a requisição quando você
@@ -209,12 +212,12 @@ export default function PrivacyPage() {
           </p>
           <ul>
             <li>
-              <ExternalLink href="https://vercel.com/legal/privacy-policy">
-                Aviso de privacidade da Vercel
+              <ExternalLink href="https://www.netlify.com/privacy/">
+                Aviso de privacidade da Netlify
               </ExternalLink>
             </li>
             <li>
-              <ExternalLink href="https://www.mercadolivre.com.br/privacidade">
+              <ExternalLink href="https://www.mercadolivre.com.br/privacidade/declaracao-privacidade">
                 Aviso de privacidade do Mercado Livre
               </ExternalLink>
             </li>
@@ -234,11 +237,13 @@ export default function PrivacyPage() {
         <section aria-labelledby="privacy-transfers">
           <h2 id="privacy-transfers">6. Transferências internacionais</h2>
           <p>
-            A operação pode envolver transferências internacionais de dados por
-            meio dos serviços acima. Países de destino, dados envolvidos, papéis
-            dos fornecedores e mecanismos de transferência aplicáveis ainda
-            precisam ser documentados. Enquanto essa revisão não for concluída,
-            analytics e Meta Pixel permanecem desativados.
+            Já foi identificado que a operação envolve transferências
+            internacionais relacionadas aos serviços utilizados. Os países de
+            destino, os dados envolvidos, os papéis dos fornecedores e os
+            mecanismos aplicáveis ainda precisam ser documentados. Analytics e
+            Meta Pixel permanecem desativados enquanto essa revisão estiver
+            pendente; hospedagem e navegação para serviços externos continuam
+            sujeitas às práticas dos respectivos fornecedores.
           </p>
           {privacyTransferSummary ? <p>{privacyTransferSummary}</p> : null}
           <p>
@@ -311,7 +316,7 @@ export default function PrivacyPage() {
             categorias opcionais exigirá nova escolha antes de carregar os
             respectivos rastreadores.
           </p>
-          <p>Última atualização: 29 de outubro de 2026.</p>
+          <p>Última atualização: 30 de outubro de 2026.</p>
         </section>
       </main>
       <SiteFooter />

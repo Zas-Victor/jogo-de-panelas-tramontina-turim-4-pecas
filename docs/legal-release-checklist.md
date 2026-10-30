@@ -8,14 +8,14 @@ itens:
   identificação/contato que devem ser divulgados; localidade informada: Natal,
   RN. Não adicionar CNPJ.
 - [ ] Testar o recebimento e o atendimento manual em `contato@kynovra.digital`.
-- [ ] Conferir com a Vercel quais dados técnicos e logs esta configuração
+- [ ] Conferir com a Netlify quais dados técnicos e logs esta configuração
   processa, quem pode acessá-los e os prazos de retenção.
 - [ ] Definir e documentar a base legal aplicável aos logs técnicos e ao registro
   local da preferência de consentimento.
 - [ ] Confirmar os períodos de retenção por categoria, inclusive mensagens,
   logs e dados configurados no GA4/Meta.
 - [ ] Documentar destinos, finalidade, papéis dos fornecedores e mecanismo
-  válido para transferências internacionais envolvendo Vercel, Google, Meta e
+  válido para transferências internacionais envolvendo Netlify, Google, Meta e
   Mercado Livre, conforme aplicável.
 - [ ] Se os IDs forem configurados, validar os cookies/identificadores e os
   respectivos prazos efetivamente criados em produção.

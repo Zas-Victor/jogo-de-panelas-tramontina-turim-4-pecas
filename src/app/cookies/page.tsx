@@ -46,24 +46,26 @@ export default function CookiesPage() {
         <section aria-labelledby="cookies-essential">
           <h2 id="cookies-essential">1. Essenciais e preferência</h2>
           <p>
-            O código desta página não grava cookies próprios para manter sua
-            preferência. Ele salva as opções de Analytics e Marketing no
-            armazenamento local do navegador, na chave{' '}
-            <code>kynovra-privacy-consent-v2</code>. Esse registro guarda apenas
-            as escolhas e a versão da preferência, sem ID de visita ou data
-            adicional.
+            A página salva as opções de Analytics e Marketing no localStorage,
+            na chave <code>kynovra-privacy-consent-v2</code>. Se o localStorage
+            estiver indisponível, tenta usar sessionStorage na mesma chave. O
+            registro contém apenas as escolhas e a versão da preferência, sem ID
+            de visita ou data adicional.
           </p>
           <p>
-            O armazenamento local é usado para lembrar a decisão e não é um
-            cookie. Não há, no código da landing page, outro cookie essencial
-            identificado. A preferência permanece até ser revogada, apagada no
-            navegador ou invalidada por mudança de versão; não há expiração
-            automática configurada.
+            Esses mecanismos de armazenamento não são cookies. Não há, no código
+            da landing page, outro cookie essencial identificado. A escolha
+            salva no localStorage não expira automaticamente; a cópia em
+            sessionStorage vale durante a sessão daquela aba. É possível revogar
+            a escolha pelo link de preferências ou apagar os dados do site no
+            navegador.
           </p>
           <p>
-            Se o navegador bloquear o armazenamento local, a escolha permanece
-            apenas na página atual e será solicitada novamente após uma nova
-            visita. Isso não impede o acesso ao conteúdo ou ao Mercado Livre.
+            Se o localStorage estiver indisponível, a página tenta manter a
+            escolha em sessionStorage durante a sessão da aba. Se ambos forem
+            bloqueados, a preferência não poderá ser persistida e as integrações
+            opcionais não serão carregadas; o acesso ao conteúdo e aos links
+            comerciais continua disponível.
           </p>
         </section>
 
@@ -138,7 +140,7 @@ export default function CookiesPage() {
             Esta política será revisada quando os serviços, configurações ou
             prazos efetivamente usados forem confirmados ou alterados.
           </p>
-          <p>Última atualização: 29 de outubro de 2026.</p>
+          <p>Última atualização: 30 de outubro de 2026.</p>
         </section>
       </main>
       <SiteFooter />

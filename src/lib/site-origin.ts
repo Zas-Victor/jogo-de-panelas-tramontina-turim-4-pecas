@@ -1,6 +1,4 @@
 const configuredSiteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim();
-const vercelProductionHost = process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim();
-const vercelDeploymentHost = process.env.VERCEL_URL?.trim();
 
 function getSiteOrigin(value: string | undefined): URL | null {
   if (!value) {
@@ -16,8 +14,4 @@ function getSiteOrigin(value: string | undefined): URL | null {
   }
 }
 
-export const siteOrigin = getSiteOrigin(
-  configuredSiteUrl ||
-    (vercelProductionHost && `https://${vercelProductionHost}`) ||
-    (vercelDeploymentHost && `https://${vercelDeploymentHost}`),
-);
+export const siteOrigin = getSiteOrigin(configuredSiteUrl);

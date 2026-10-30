@@ -18,7 +18,7 @@ Para validar antes de publicar: `pnpm lint`, `pnpm typecheck`, `pnpm build` e `p
 
 ## Ambiente
 
-Copie `.env.example` para `.env.local`. `NEXT_PUBLIC_SITE_URL` deve conter a origem HTTPS canônica. Na Vercel, se não for definido, a página usa `VERCEL_PROJECT_PRODUCTION_URL` e depois `VERCEL_URL` para canonical, Open Graph, sitemap e robots.
+Copie `.env.example` para `.env.local`. Defina `NEXT_PUBLIC_SITE_URL` como a origem HTTPS canônica do domínio de produção; o valor da Netlify está em `netlify.toml`.
 
 Os IDs opcionais são `NEXT_PUBLIC_GA_MEASUREMENT_ID` e `NEXT_PUBLIC_META_PIXEL_ID`. Só use IDs públicos. Os scripts exigem consentimento por categoria e revisão concluída, indicada por `NEXT_PUBLIC_PRIVACY_NOTICE_APPROVED=true` junto com controlador, retenção, transferências internacionais e detalhes dos logs técnicos confirmados. O contato confirmado é `contato@kynovra.digital`. Consulte `docs/legal-release-checklist.md`; não marque o aviso como aprovado antes de concluir a revisão. Sem a configuração completa, os rastreadores permanecem desativados e os links comerciais funcionam.
 
@@ -26,12 +26,8 @@ Todas as CTAs comerciais levam ao link fixo `https://meli.la/1REfxSi`, sem alter
 
 ## Deploy na Netlify
 
-O projeto tramontina-turim publica a branch main do GitHub. Pushes nessa branch geram deploys de produção; pull requests geram previews. O adaptador oficial Next.js da Netlify é detectado durante pnpm build. O netlify.toml define a URL canônica e as opções de instalação pnpm.
+O projeto tramontina-turim publica a branch main do GitHub. Pushes nessa branch geram deploys de produção; pull requests geram previews. O adaptador Next.js da Netlify é detectado durante pnpm build. O netlify.toml define a URL canônica e as opções de instalação pnpm.
 
 Configure NEXT_PUBLIC_GA_MEASUREMENT_ID ou NEXT_PUBLIC_META_PIXEL_ID somente após a revisão de privacidade e consentimento. Sem esses IDs, os rastreadores permanecem desativados.
 
-Para ativar o domínio personalizado, configure no DNS apenas CNAME panelas-turim → tramontina-turim.netlify.app; não altere nameservers nem outros registros. O certificado HTTPS é emitido após a validação do DNS.
-
-## Vercel durante a migração
-
-O deploy da Vercel permanece como contingência até que o domínio personalizado e o HTTPS da Netlify estejam validados.
+O CNAME de panelas-turim deve apontar para tramontina-turim.netlify.app; não altere nameservers nem outros registros.

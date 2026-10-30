@@ -1,7 +1,7 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ga4MeasurementId,
   mercadolivreAffiliateUrl,
@@ -200,15 +200,23 @@ function clearMarketingIdentifiers() {
   removeFirstPartyCookies(/^_(?:fbp|fbc)$/);
 }
 
-function readStoredConsent(): ConsentChoice | null {
+function getStoredConsentValue(
+  storage: 'localStorage' | 'sessionStorage',
+): string | null {
   try {
-    const storedValue = localStorage.getItem(consentStorageKey);
+    return window[storage].getItem(consentStorageKey);
+  } catch {
+    return null;
+  }
+}
 
-    if (!storedValue) {
-      return null;
-    }
+function parseStoredConsent(value: string | null): ConsentChoice | null {
+  if (!value) {
+    return null;
+  }
 
-    const parsed = JSON.parse(storedValue) as Partial<StoredConsent>;
+  try {
+    const parsed = JSON.parse(value) as Partial<StoredConsent>;
 
     if (
       parsed.version !== 2 ||
@@ -227,6 +235,13 @@ function readStoredConsent(): ConsentChoice | null {
   }
 }
 
+function readStoredConsent(): ConsentChoice | null {
+  return (
+    parseStoredConsent(getStoredConsentValue('sessionStorage')) ??
+    parseStoredConsent(getStoredConsentValue('localStorage'))
+  );
+}
+
 export function AnalyticsConsent() {
   const pathname = usePathname();
   const [consent, setConsent] = useState<ConsentChoice | null>(null);
@@ -240,31 +255,52 @@ export function AnalyticsConsent() {
   const lastAnalyticsView = useRef('');
   const lastMarketingView = useRef('');
 
+  const openPreferences = useCallback(
+    (trigger?: HTMLElement | null) => {
+      if (trigger) {
+        lastPreferencesTrigger.current = trigger;
+      }
+      setAnalyticsDraft(consent?.analytics ?? false);
+      setMarketingDraft(consent?.marketing ?? false);
+      setPreferencesOpen(true);
+    },
+    [consent],
+  );
+
   useEffect(() => {
     setConsent(readStoredConsent());
     setHydrated(true);
   }, []);
 
   useEffect(() => {
-    const openPreferences = (event: Event) => {
-      if (event instanceof CustomEvent && event.detail instanceof HTMLElement) {
-        lastPreferencesTrigger.current = event.detail;
-      }
-      setAnalyticsDraft(consent?.analytics ?? false);
-      setMarketingDraft(consent?.marketing ?? false);
-      setPreferencesOpen(true);
+    const handleOpenPreferences = (event: Event) => {
+      const trigger =
+        event instanceof CustomEvent && event.detail instanceof HTMLElement
+          ? event.detail
+          : null;
+      openPreferences(trigger);
     };
 
-    window.addEventListener(openConsentEvent, openPreferences);
-    return () => window.removeEventListener(openConsentEvent, openPreferences);
-  }, [consent]);
+    window.addEventListener(openConsentEvent, handleOpenPreferences);
+    document.documentElement.dataset.cookieConsentSettingsReady = 'true';
+    return () => {
+      window.removeEventListener(openConsentEvent, handleOpenPreferences);
+      delete document.documentElement.dataset.cookieConsentSettingsReady;
+    };
+  }, [openPreferences]);
 
   useEffect(() => {
     if (preferencesOpen) {
       panelTitleRef.current?.focus();
       wasPreferencesOpen.current = true;
     } else if (wasPreferencesOpen.current) {
-      lastPreferencesTrigger.current?.focus();
+      if (lastPreferencesTrigger.current?.isConnected) {
+        lastPreferencesTrigger.current.focus();
+      } else {
+        document
+          .querySelector<HTMLElement>('[data-consent-settings-trigger]')
+          ?.focus();
+      }
       wasPreferencesOpen.current = false;
     }
   }, [preferencesOpen]);
@@ -407,21 +443,42 @@ export function AnalyticsConsent() {
   }, [consent]);
 
   function saveConsent(choice: ConsentChoice) {
-    const nextChoice = {
+    const requestedChoice = {
       analytics: choice.analytics && hasAnalytics,
       marketing: choice.marketing && hasMarketing,
     };
+    const serializedChoice = JSON.stringify({
+      version: 2,
+      ...requestedChoice,
+    } satisfies StoredConsent);
+    let persisted = false;
 
     try {
-      localStorage.setItem(
-        consentStorageKey,
-        JSON.stringify({ version: 2, ...nextChoice } satisfies StoredConsent),
-      );
+      window.sessionStorage.removeItem(consentStorageKey);
     } catch {
-      // Keep the current page usable if browser storage is unavailable.
+      // localStorage remains the primary preference store.
     }
 
-    setConsent(nextChoice);
+    try {
+      window.localStorage.setItem(consentStorageKey, serializedChoice);
+      persisted = true;
+      try {
+        window.sessionStorage.removeItem(consentStorageKey);
+      } catch {
+        // An inaccessible session store cannot override localStorage.
+      }
+    } catch {
+      try {
+        window.sessionStorage.setItem(consentStorageKey, serializedChoice);
+        persisted = true;
+      } catch {
+        // Without browser storage, optional tracking cannot be enabled.
+      }
+    }
+
+    setConsent(
+      persisted ? requestedChoice : { analytics: false, marketing: false },
+    );
     setPreferencesOpen(false);
   }
 
@@ -465,9 +522,9 @@ export function AnalyticsConsent() {
               : 'Nenhum ID opcional está configurado neste ambiente. Nenhum script de analytics ou marketing será carregado.'}
         </p>
         <p className="privacy-essential-note">
-          Essenciais: esta página guarda sua escolha no armazenamento local do
-          navegador para respeitar sua preferência. Isso não é um cookie e não
-          contém um identificador de visita.
+          Essenciais: a página guarda sua escolha no armazenamento do navegador,
+          priorizando localStorage e usando sessionStorage se necessário. Isso
+          não é um cookie nem contém um identificador de visita.
         </p>
       </div>
 
@@ -569,7 +626,8 @@ export function AnalyticsConsent() {
             </button>
             <button
               className="consent-button"
-              onClick={() => setPreferencesOpen(true)}
+              data-consent-settings-trigger
+              onClick={(event) => openPreferences(event.currentTarget)}
               type="button"
             >
               Personalizar
